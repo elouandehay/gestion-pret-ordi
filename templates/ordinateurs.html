@@ -1,0 +1,13 @@
+{% extends "base.html" %}  <!-- Hérite du template de base -->
+
+{% block title %}Ordinateurs{% endblock %}  <!-- Titre de la page -->
+
+{% block content %}
+<h1>Liste des ordinateurs</h1>
+
+<ul>
+  {% for o in ordinateurs %}
+    <li>{{ o.modele }} - {% if o.disponible %}Disponible{% else %}Non disponible{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

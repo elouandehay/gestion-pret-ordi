@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Gestion des prêts{% endblock %}</title>
+</head>
+<body>
+    <!-- Menu simple -->
+    <nav>
+        <a href="/">Accueil</a> |
+        <a href="/etudiants">Étudiants</a> |
+        <a href="/ordinateurs">Ordinateurs</a> |
+        <a href="/prets">Prêts</a>
+    </nav>
+
+    <hr>
+
+    <!-- Ici on met le contenu spécifique à chaque page -->
+    {% block content %}{% endblock %}
+</body>
+</html>

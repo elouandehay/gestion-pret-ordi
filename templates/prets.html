@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Prêts</title></head>
+<body>
+<h1>Prêts en cours</h1>
+<ul>
+  {% for p in prets %}
+    <li>{{ p.etudiant.prenom }} {{ p.etudiant.nom }} - {{ p.ordinateur.modele }} - {{ p.date_pret.strftime("%d/%m/%Y %H:%M") }}</li>
+  {% endfor %}
+</ul>
+<a href="/">Retour à l'accueil</a>
+</body>
+</html>
