@@ -1,21 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Gestion des prêts{% endblock %}</title>
+    <title>Gestion Prêt Ordi</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .disponible { color: green; font-weight: bold; }
+        .emprunte { color: red; font-weight: bold; }
+        input[type="text"] { padding: 5px; }
+        button { cursor: pointer; padding: 5px 10px; }
+    </style>
 </head>
 <body>
-    <!-- Menu simple -->
-    <nav>
-        <a href="/">Accueil</a> |
-        <a href="/etudiants">Étudiants</a> |
-        <a href="/ordinateurs">Ordinateurs</a> |
-        <a href="/prets">Prêts</a>
-    </nav>
-
+    <h1>🖥️ Gestion des Prêts</h1>
     <hr>
-
-    <!-- Ici on met le contenu spécifique à chaque page -->
     {% block content %}{% endblock %}
 </body>
 </html>

@@ -1,13 +1,43 @@
-{% extends "base.html" %}  <!-- Hérite du template de base -->
-
-{% block title %}Accueil{% endblock %}  <!-- Titre de la page -->
+{% extends 'base.html' %}
 
 {% block content %}
-<h1>Gestion des prêts d'ordinateurs</h1>
-<p>Utilisez le menu pour naviguer entre les pages :</p>
-<ul>
-    <li><a href="/etudiants">Étudiants</a></li>
-    <li><a href="/ordinateurs">Ordinateurs</a></li>
-    <li><a href="/prets">Prêts</a></li>
-</ul>
+    <h2>État du parc informatique</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Nom du PC</th>
+                <th>État</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pc in ordinateurs %}
+            <tr>
+                <td>{{ pc['nom'] }}</td>
+                
+                <td>
+                    {% if pc['etat'] == 'disponible' %}
+                        <span class="disponible">🟢 Disponible</span>
+                    {% else %}
+                        <span class="emprunte">🔴 Emprunté par {{ pc['emprunteur'] }}</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if pc['etat'] == 'disponible' %}
+                        <form action="{{ url_for('emprunter', id=pc['id']) }}" method="post" style="display:inline;">
+                            <input type="text" name="eleve" placeholder="Nom de l'élève" required>
+                            <button type="submit">Prêter</button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('rendre', id=pc['id']) }}" method="post" style="display:inline;">
+                            <button type="submit">Marquer comme rendu</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}
