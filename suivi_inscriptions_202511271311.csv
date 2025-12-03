@@ -1,0 +1,7 @@
+Code Apprenant;Nom;Prénom;Date de naissance;N°INE;Email;Témoin Doublon potentiel;Statut inscription;Code PIA;Libellé PIA;Période de mise en œuvre;Témoin bourse;Témoin 'inclus dans un dossier';Date dernière modification;Nationalité Apprenant;Régime Inscription
+A001;Martin;Lucas;2004-03-12;120045678;lucas.martin@example.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-05;Française;Formation initiale
+A002;Dupont;Emma;2005-07-22;120078945;emma.dupont@example.com;Non;Inscrit;P02;Réseaux;2024-2025;Non;Non;2025-01-07;Française;Formation initiale
+A003;Rossi;Matteo;2003-11-03;110056789;matteo.rossi@example.com;Oui;En attente;P01;Informatique;2024-2025;Non;Oui;2025-01-03;Italienne;Formation continue
+A004;Almeida;Sofia;2004-02-18;130034567;sofia.almeida@example.com;Non;Inscrit;P03;Cybersécurité;2024-2025;Oui;Non;2025-01-06;Portugaise;Formation initiale
+A005;Nguyen;Théo;2005-10-09;140012345;theo.nguyen@example.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-02;Française;Formation initiale
+
