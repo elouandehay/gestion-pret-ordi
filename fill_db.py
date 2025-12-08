@@ -4,22 +4,47 @@ from model import db, Etudiant
 
 FICHIER = "suivi_inscriptions_202511271311.csv"
 
-with app.app_context():  # pour accéder à la DB dans un script externe
+def increment_annee(annee):
+    if annee < 5:
+        return annee + 1
+    return 5
+
+
+with app.app_context():
+ 
+    # 1) Incrémenter l’année de tous les étudiants
+    etudiants = Etudiant.query.all()
+    for etu in etudiants:
+        etu.annee = increment_annee(etu.annee)
+        etu.en_scolarite = False 
+
+    db.session.commit()
+    
+    # 2) Lecture du CSV et mise à jour
     with open(FICHIER, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f, delimiter=';')
 
         for ligne in reader:
-            etu = Etudiant(
-                # manque boursier : true/false
-                id=ligne["N°INE"],
-                nom=ligne["Nom"],
-                prenom=ligne["Prénom"],
-                email=ligne["Email"],
-                annee=1  # ou autre valeur par défaut
-                # manque pret
-            )
+            id_ine = ligne["N°INE"]
 
-            db.session.add(etu)
+            etu = Etudiant.query.get(id_ine)
 
-        db.session.commit()
-
+            if etu is None:
+                # Étudiant inexistant → ajout
+                etu = Etudiant(
+                    id=id_ine,
+                    nom=ligne["Nom"],
+                    prenom=ligne["Prénom"],
+                    email=ligne["Email"],
+                    annee=3,  # année d'entrée, modifiable selon tes règles
+                    en_scolarite=True
+                )
+                db.session.add(etu)
+            else:
+                # Étudiant existant → update
+                etu.nom = ligne["Nom"]
+                etu.prenom = ligne["Prénom"]
+                etu.email = ligne["Email"] 
+                etu.en_scolarite = True
+                
+    db.session.commit() 
