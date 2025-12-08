@@ -8,7 +8,7 @@ import bcrypt
 
 
 app = Flask(__name__)
-app.secret_key = 'azerty'
+app.secret_key ='3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
 
 # Fonction pour se connecter à la base SQLite
 def get_db_connection():
