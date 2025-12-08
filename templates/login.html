@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion Parc Informatique</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        
+        /* Tes styles pour les états */
+        .disponible { color: green; font-weight: bold; }
+        .emprunte { color: red; font-weight: bold; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 10px; border-radius: 5px; }
+        .btn-add { background-color: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h3>Gestion Prêts</h3>
+        <div>
+            Connecté en tant que <strong>{{ session['user'] }}</strong> | 
+            <a href="{{ url_for('logout') }}" style="color: red;">Se déconnecter</a>
+        </div>
+    </div>
+
+    <br>
+
+    <h2>État du parc informatique</h2>
+    
+    <a href="{{ url_for('ajouter') }}" class="btn-add">+ Ajouter un ordinateur</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nom du PC</th>
+                <th>État</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pc in ordinateurs %}
+            <tr>
+                <td>{{ pc['nom'] }}</td>
+                
+                <td>
+                    {% if pc['etat'] == 'disponible' %}
+                        <span class="disponible">🟢 Disponible</span>
+                    {% else %}
+                        <span class="emprunte">🔴 Emprunté par {{ pc['emprunteur'] }}</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if pc['etat'] == 'disponible' %}
+                        <form action="{{ url_for('emprunter', id=pc['id']) }}" method="post" style="display:inline;">
+                            <input type="text" name="eleve" placeholder="Nom de l'élève" required>
+                            <button type="submit">Prêter</button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('rendre', id=pc['id']) }}" method="post" style="display:inline;">
+                            <button type="submit">Marquer comme rendu</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
