@@ -10,6 +10,14 @@ import bcrypt
 app = Flask(__name__)
 app.secret_key ='3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
 
+#AJOUT SÉCURITÉ HTTPS
+#Empêche le cookie d'être envoyé si on n'est pas en HTTPS
+app.config['SESSION_COOKIE_SECURE'] = True
+#Empêche JavaScript de lire le cookie (contre les failles XSS)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+#Protège contre les sites externes qui voudraient utiliser les cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # Fonction pour se connecter à la base SQLite
 def get_db_connection():
     conn=sqlite3.connect('database.db')
@@ -113,4 +121,4 @@ def ajouter():
     return render_template('ajouter.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, ssl_context='adhoc') #permet de générer un certificat https temporaire.
