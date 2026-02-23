@@ -1,11 +1,12 @@
-{% extends "base.html" %}
-
-{% block content %}
-<h2>Ajouter un nouvel ordinateur</h2>
 <form action="{{ url_for('ajouter') }}" method="post">
-    <label for="nom_pc">Nom du PC :</label>
-    <input type="text" id="nom_pc" name="nom_pc" placeholder="Ex: PC-004" required>
+    <label for="id_pc">ID du PC :</label>
+    <input type="number" id="id_pc" name="id_pc" placeholder="Ex: 101" required>
+
+    <label for="modele_pc">Modèle du PC :</label>
+    <input type="text" id="modele_pc" name="modele_pc" placeholder="Ex: PC-004" required>
+
+    <label for="date_sortie">Date de sortie :</label>
+    <input type="date" id="date_sortie" name="date_sortie" required>
+
     <button type="submit">Ajouter</button>
 </form>
-<a href="{{ url_for('index') }}">Retour à l'accueil</a>
-{% endblock %}

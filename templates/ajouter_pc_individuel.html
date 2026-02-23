@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Ajouter des PC pour le modèle {{ modele }}</h2>
+<p>Vous pouvez ajouter plusieurs PC pour ce modèle en remplissant ce formulaire à nouveau.</p>
+
+<form action="{{ url_for('ajouter_pc_individuel') }}" method="post">
+    <input type="hidden" name="modele_pc" value="{{ modele }}">
+    <input type="hidden" name="date_sortie" value="{{ date_sortie }}">
+
+    <label for="numero_serie">Numero de serie du PC :</label>
+    <input type="text" id="numero_serie" name="numero_serie" placeholder="Ex: LPNHK80D" required>
+
+    <label for="numero_inventaire">Numero d'inventaire du PC :</label>
+    <input type="text" id="numero_inventaire" name="numero_inventaire" placeholder="Ex: LPNHK80-ccdPD" required>
+
+    <button type="submit">Ajouter ce PC</button>
+</form>
+<a href="{{ url_for('index') }}">Terminer, retour à l'accueil</a>
+{% endblock %}

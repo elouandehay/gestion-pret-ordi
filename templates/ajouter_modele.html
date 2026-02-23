@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Ajouter un modèle d'ordinateur</h2>
+<form action="{{ url_for('ajouter_modele') }}" method="post">
+    <label for="modele_pc">Modèle du PC :</label>
+    <input type="text" id="modele_pc" name="modele_pc" placeholder="Ex: Dell XPS 15" required>
+
+    <label for="date_sortie">Date de sortie :</label>
+    <input type="date" id="date_sortie" name="date_sortie" required>
+    <div style="text-align:center; margin-top:10px;">
+        <button type="submit"
+                style="background-color:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:16px;">
+            💾 Enregistrer le modèle
+        </button>
+    </div>
+</form>
+
+<a href="{{ url_for('index') }}">← Retour à l'accueil</a>
+{% endblock %}

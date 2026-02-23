@@ -1,22 +1,23 @@
-DROP TABLE IF EXISTS ordinateurs;
-DROP TABLE IF EXISTS etudiants;
 DROP TABLE IF EXISTS prets;
 DROP TABLE IF EXISTS commentaires;
+DROP TABLE IF EXISTS ordinateurs;
+DROP TABLE IF EXISTS etudiants;
 DROP TABLE IF EXISTS administrateurs;
 
--- Table Administrateurs (ESSENTIELLE pour le login)
+-- Table Administrateurs
 CREATE TABLE administrateurs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL
 );
 
--- Table Ordinateurs (MODIFIÉE pour correspondre à ton app.py et aux INSERTs)
+-- Table Ordinateurs
 CREATE TABLE ordinateurs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL,
-    etat TEXT NOT NULL,
-    emprunteur TEXT
+    numero_serie TEXT PRIMARY KEY,
+    numero_inventaire TEXT NOT NULL,
+    date_sortie DATE NOT NULL,
+    modele TEXT NOT NULL,
+    dispo INTEGER DEFAULT 1
 );
 
 -- Les autres tables que tu veux garder (inchangées)
@@ -25,27 +26,29 @@ CREATE TABLE etudiants (
     nom TEXT NOT NULL,
     prenom TEXT NOT NULL,
     email TEXT NOT NULL,
-    boursier BOOL NOT NULL
+    boursier BOOL NOT NULL,
+    ine TEXT,
+    annee INTEGER DEFAULT 1,
+    en_scolarite BOOL DEFAULT 1
 );
 
 CREATE TABLE prets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    caution_prof_validee INTEGER DEFAULT 0,
+    caution_compta_validee INTEGER DEFAULT 0,
+
     etudiant_id INTEGER NOT NULL,
-    ordinateur_id INTEGER NOT NULL,
+    ordinateur_id TEXT NOT NULL,
     date_pret DATETIME DEFAULT CURRENT_TIMESTAMP,
-    date_retour DATETIME DEFAULT (DATETIME('now', '+1095 days')),
+    date_retour DATETIME DEFAULT (DATETIME('now', '+1095 days')), -- 3 ans
     FOREIGN KEY (etudiant_id) REFERENCES etudiants(id),
-    FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(id)
+    FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(numero_serie)
 );
 
 CREATE TABLE commentaires (
-   ordinateur_id INTEGER,
+   ordinateur_id TEXT,
    commentaire TEXT,
-   date_commentaire DATE NOT NULL,
-   FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(id)
-);
+   date_commentaire DATE DEFAULT CURRENT_DATE,
+   FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(numero_serie)
+   );
 
--- INSERTION DES DONNÉES (Cela fonctionnera maintenant)
-INSERT INTO ordinateurs (nom, etat) VALUES ('PC-001', 'disponible');
-INSERT INTO ordinateurs (nom, etat) VALUES ('PC-002', 'disponible');
-INSERT INTO ordinateurs (nom, etat, emprunteur) VALUES ('PC-003', 'emprunte', 'Jean Dupont');
