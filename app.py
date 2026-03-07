@@ -6,13 +6,14 @@ import sqlite3
 from functools import wraps
 import bcrypt
 
+from Convention.generation_convention import generer_convention 
+from update_etudiants import process_etudiants
 
 app = Flask(__name__)
 app.secret_key ='3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
 
 #AJOUT SÉCURITÉ HTTPS
 #Empêche le cookie d'être envoyé si on n'est pas en HTTPS
-
 app.config['SESSION_COOKIE_SECURE'] = True
 
 #Empêche JavaScript de lire le cookie (contre les failles XSS)
@@ -238,6 +239,75 @@ def ajouter_pc_individuel():
         modele_pc = request.args.get('modele')
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
+
+@app.route("/update_etudiants", methods=["GET", "POST"])
+@login_required
+def update_etudiants():
+    if request.method == "POST":
+        uploaded_files = request.files.getlist("files")
+        # On prend jusqu'à 4 fichiers
+        
+        file1 = uploaded_files[0] if len(uploaded_files) > 0 else None
+        file2 = uploaded_files[1] if len(uploaded_files) > 1 else None
+        file3 = uploaded_files[2] if len(uploaded_files) > 2 else None
+        file4 = uploaded_files[3] if len(uploaded_files) > 3 else None
+
+        process_etudiants(file1, file2, file3, file4)
+
+        flash("Les étudiants ont été mis à jour avec succès.")
+
+        return redirect(url_for("index"))
+
+    return render_template("update_etudiants.html")
+
+@app.route('/convention/generation', methods=['GET', 'POST'])
+@login_required
+def generation_convention():
+    if request.method == 'POST':
+        nom = request.form.get('nom')
+        prenom = request.form.get('prenom')
+        observation = request.form.get('observation')
+        signature = request.form.get('signature')
+
+        # Vérification minimale
+        if not nom or not prenom:
+            flash("Nom et prénom sont obligatoires.")
+            return redirect(url_for('generation_convention'))
+
+        conn = get_db_connection()
+
+        # Vérifier si l'étudiant existe
+        etudiant = conn.execute(
+            "SELECT * FROM etudiants WHERE nom = ? AND prenom = ?",
+            (nom, prenom)
+        ).fetchone()
+
+        conn.close()
+
+        if etudiant is None:
+            flash("Cet étudiant n'existe pas dans la base.")
+            return redirect(url_for('generation_convention'))
+
+        # récupération des champs de la base
+        annee_etude = etudiant["annee"]
+        ine = etudiant["ine"]
+
+        generer_convention(
+            nom,
+            prenom,
+            annee_etude,
+            ine,
+            observation
+        )
+
+        return redirect(url_for('index'))
+
+    return render_template('convention_generation.html')
+
+@app.route("/mail")
+@login_required
+def mail():
+    return render_template("mail.html")
 
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required

@@ -1,0 +1,11 @@
+Code Apprenant;Nom;Prénom;Date de naissance;N°INE;Email;Témoin Doublon potentiel;Statut inscription;Code PIA;Libellé PIA;Période de mise en œuvre;Témoin bourse;Témoin 'inclus dans un dossier';Date dernière modification;Nationalité Apprenant;Régime Inscription
+8940;MONAURY;Oceane;2003-06-14;230089401;oceane.monaury@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-05;Française;IRE-ING-3INF
+8914;LEMAITRE;Jules;2003-09-21;230089142;jules.lemaitre@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-05;Française;IRE-ING-3INF
+8704;LE;Ba Sieu;2002-12-03;230087041;basieu.le@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-06;Vietnamienne;IRE-ING-3INF
+8649;NGUYEN;Anh Dung;2003-02-18;230086491;anhdung.nguyen@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-06;Vietnamienne;IRE-ING-3INF
+8220;LE BARILLEC;Zoe;2003-11-09;230082201;zoe.lebarillec@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-04;Française;IRE-ING-3INF
+8117;NOLLE;Titouan;2002-08-27;230081171;titouan.nolle@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-04;Française;IRE-ING-3INF
+25000549;ROMANINI;Alexandre;2003-01-30;225000549;alexandre.romanini@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-03;Française;IRE-ING-3INF
+25000478;BRIAND;Tom;2003-07-16;225000478;tom.briand@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-03;Française;IRE-ING-3INF
+25000464;ALUSSE;Celestin;2003-05-02;225000464;celestin.alusse@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2025-01-02;Française;IRE-ING-3INF
+25000454;NGUYEN;Juliette;2003-10-11;225000454;juliette.nguyen@gmail.com;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2025-01-02;Française;IRE-ING-3INF

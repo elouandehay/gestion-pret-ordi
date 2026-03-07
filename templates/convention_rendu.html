@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Rendu du matériel</h2>
+
+<style>
+    form label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    form textarea,
+    form input[type="date"] {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        box-sizing: border-box;
+    }
+
+    form textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    form button {
+        margin-top: 20px;
+    }
+</style>
+
+<form action="{{ url_for('convention_rendu') }}" method="post">
+
+    <label for="etat_retour">État lors du retour :</label>
+    <textarea id="etat_retour" name="etat_retour" required></textarea>
+
+    <label for="remarques">Remarques :</label>
+    <textarea id="remarques" name="remarques"></textarea>
+
+    <label for="signature">Signature :</label>
+    <textarea id="signature" name="signature" placeholder="Signer ici"></textarea>
+
+    <button type="submit">Valider le retour</button>
+</form>
+
+<a href="{{ url_for('index') }}">Retour à l'accueil</a>
+{% endblock %}

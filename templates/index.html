@@ -7,7 +7,25 @@
     </div>
     <hr>
     <h2>État du parc informatique</h2>
-    <a href="{{ url_for('ajouter_modele') }}"> Ajouter des ordinateurs</a>
+    <div class="actions-menu">
+
+      <a class="action-btn" href="{{ url_for('generation_convention') }}">
+          Générer une convention
+      </a>
+
+      <a class="action-btn" href="{{ url_for('update_etudiants') }}">
+          Mettre à jour les étudiants
+      </a>
+
+      <a class="action-btn" href="{{ url_for('ajouter_modele') }}">
+          Ajouter des ordinateurs
+      </a>
+
+      <a class="action-btn" href="{{ url_for('mail') }}">
+          Programmer l'envoi de mails
+      </a>
+
+    </div>
     <table>
         <thead>
             <tr>
