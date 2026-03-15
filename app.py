@@ -282,7 +282,26 @@ def generation_convention():
             (nom, prenom)
         ).fetchone()
 
-        conn.close()
+        ordinateur = conn.execute(
+            "SELECT * FROM ordinateurs WHERE dispo = 1 LIMIT 1"
+        ).fetchone()
+
+        if ordinateur is None:
+            flash("Aucun ordinateur disponible.")
+            conn.close()
+            return redirect(url_for('generation_convention'))
+
+        modele = ordinateur["modele"]
+        numero_inventaire = ordinateur["numero_inventaire"]
+        numero_serie = ordinateur["numero_serie"]
+
+        conn.execute(
+            "UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?",
+            (numero_serie,)
+        )
+
+        conn.commit()
+        conn.close()        
 
         if etudiant is None:
             flash("Cet étudiant n'existe pas dans la base.")
@@ -297,7 +316,10 @@ def generation_convention():
             prenom,
             annee_etude,
             ine,
-            observation
+            observation,
+            modele,
+            numero_inventaire,
+            numero_serie
         )
 
         return redirect(url_for('index'))
