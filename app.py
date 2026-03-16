@@ -240,6 +240,11 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
+@app.route("/mail")
+@login_required
+def programmation_mails():
+    return render_template("mail.html")
+
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
 def update_etudiants():
