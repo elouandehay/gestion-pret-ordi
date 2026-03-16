@@ -53,3 +53,18 @@ CREATE TABLE commentaires (
    date_commentaire DATE DEFAULT CURRENT_DATE,
    FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(numero_serie)
    );
+
+CREATE TABLE cibles_mails (
+  id INTEGER PRIMARY KEY,
+  cible TEXT
+);
+
+CREATE TABLE mails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cible_id INTEGER NOT NULL DEFAULT 1,
+  objet TEXT,
+  contenu TEXT,
+  date_envoi DATETIME NOT NULL,
+  envoye INTEGER DEFAULT 0,
+  FOREIGN KEY (cible_id) REFERENCES cibles_mails(id)
+);

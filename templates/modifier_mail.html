@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Modifier le mail</h2>
+
+<style>
+    form label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    form input[type="text"],
+    form input[type="datetime-local"],
+    form select,
+    form textarea {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        box-sizing: border-box;
+    }
+
+    form textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    form button {
+        margin-top: 20px;
+    }
+</style>
+
+<form method="post">
+
+<label for="objet">Objet du mail :</label>
+<input type="text" id="objet" name="objet" value="{{ mail.objet }}" required>
+
+<label for="contenu">Contenu du mail :</label>
+<textarea id="contenu" name="contenu" required>{{ mail.contenu }}</textarea>
+
+<label for="date_envoi">Date et heure d'envoi :</label>
+<input type="datetime-local" id="date_envoi" name="date_envoi" value="{{ mail.date_envoi }}" required>
+
+<button type="submit">Enregistrer les modifications</button>
+
+</form>
+
+<a href="{{ url_for('programmation_mails') }}">Retour à la liste des mails</a>
+
+{% endblock %}

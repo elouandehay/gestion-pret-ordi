@@ -89,25 +89,55 @@
             <th>Actions</th>
         </tr>
     </thead>
+
     <tbody>
 
-
     {% for mail in mails_programmes %}
-    <tr>
-        <td>{{ mail.cible }}</td>
-        <td>{{ mail.objet }}</td>
-        <td>{{ mail.date_envoi }}</td>
-        <td class="actions">
-            <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
-            <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
-        </td>
-    </tr>
+      <tr>
+          <td>{{ mail.cible }}</td>
+          <td>{{ mail.objet }}</td>
+          <td>{{ mail.date_envoi }}</td>
+          <td class="actions">
+              <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
+              <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
+          </td>
+      </tr>
     {% endfor %}
 
-</tbody>
-
+    </tbody>
 
 </table>
+
+<h3>Mails envoyés</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Cible</th>
+            <th>Objet</th>
+            <th>Date d'envoi</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for mail in mails_envoyes %}
+      <tr>
+          <td>{{ mail.cible }}</td>
+          <td>{{ mail.objet }}</td>
+          <td>{{ mail.date_envoi }}</td>
+          <td class="actions">
+              <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
+              <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
+          </td>
+      </tr>
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
 
 <a href="{{ url_for('index') }}">Retour à l'accueil</a>
 

@@ -240,10 +240,106 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
-@app.route("/mail")
+@app.route("/mail", methods=["GET", "POST"])
 @login_required
 def programmation_mails():
-    return render_template("mail.html")
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    if request.method == "POST":
+
+        cible = request.form["cible"]
+        objet = request.form["objet"]
+        contenu = request.form["contenu"]
+        date_envoi = request.form["date_envoi"]
+
+        # mapping entre le select HTML et les id de la table
+        mapping = {
+            "retard": 1,
+            "tous": 2,
+            "boursiers": 3
+        }
+
+        cible_id = mapping[cible]
+
+        cur.execute("""
+            INSERT INTO mails (cible_id, objet, contenu, date_envoi)
+            VALUES (?, ?, ?, ?)
+        """, (cible_id, objet, contenu, date_envoi))
+
+        conn.commit()
+
+    # mails programmés (envoye = 0)
+    cur.execute("""
+        SELECT mails.id, mails.objet, mails.date_envoi, cibles_mails.cible
+        FROM mails
+        JOIN cibles_mails ON mails.cible_id = cibles_mails.id
+        WHERE mails.envoye = 0
+    """)
+    mails_programmes = cur.fetchall()
+
+    # mails envoyés (envoye = 1)
+    cur.execute("""
+        SELECT mails.id, mails.objet, mails.date_envoi, cibles_mails.cible
+        FROM mails
+        JOIN cibles_mails ON mails.cible_id = cibles_mails.id
+        WHERE mails.envoye = 1
+    """)
+    mails_envoyes = cur.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "mail.html",
+        mails_programmes=mails_programmes,
+        mails_envoyes=mails_envoyes
+    )
+
+@app.route("/mail/supprimer/<int:id>")
+@login_required
+def supprimer_mail(id):
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM mails WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("programmation_mails"))
+
+@app.route("/mail/modifier/<int:id>", methods=["GET", "POST"])
+@login_required
+def modifier_mail(id):
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        objet = request.form["objet"]
+        contenu = request.form["contenu"]
+        date_envoi = request.form["date_envoi"]
+
+        cur.execute("""
+            UPDATE mails
+            SET objet = ?, contenu = ?, date_envoi = ?
+            WHERE id = ?
+        """, (objet, contenu, date_envoi, id))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("programmation_mails"))
+
+    cur.execute("SELECT * FROM mails WHERE id = ?", (id,))
+    mail = cur.fetchone()
+
+    conn.close()
+
+    return render_template("modifier_mail.html", mail=mail)
 
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
