@@ -6,6 +6,10 @@ import sqlite3
 from functools import wraps
 import bcrypt
 
+import os
+from flask import request, redirect, url_for, render_template, send_file
+from werkzeug.utils import secure_filename
+
 from Convention.generation_convention import generer_convention 
 from update_etudiants import process_etudiants
 
@@ -240,6 +244,8 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
+
+
 @app.route("/mail", methods=["GET", "POST"])
 @login_required
 def programmation_mails():
@@ -360,6 +366,35 @@ def update_etudiants():
         return redirect(url_for("index"))
 
     return render_template("update_etudiants.html")
+
+@app.route("/convention")
+@login_required
+def modification_convention():
+    return render_template("modifier_convention.html")
+
+@app.route("/convention/download")
+@login_required
+def telecharger_convention():
+
+    chemin = os.path.join(app.root_path, "Convention", "convention.tex")
+
+    return send_file(
+        chemin,
+        as_attachment=True,
+        download_name="convention.tex"
+    )
+
+@app.route("/convention/upload", methods=["POST"])
+@login_required
+def upload_convention():
+
+    file = request.files.get("file_tex")
+
+    if file and file.filename.endswith(".tex"):
+        chemin = os.path.join(app.root_path, "Convention" ,"convention.tex")
+        file.save(chemin)
+
+    return redirect(url_for("modification_convention"))
 
 @app.route('/convention/generation', methods=['GET', 'POST'])
 @login_required
