@@ -244,7 +244,14 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
+#-----
 
+# Programmation de l'envoye de mails
+
+@app.route("/mail")
+@login_required
+def mail():
+    return render_template("mail.html")
 
 @app.route("/mail", methods=["GET", "POST"])
 @login_required
@@ -347,6 +354,8 @@ def modifier_mail(id):
 
     return render_template("modifier_mail.html", mail=mail)
 
+# Update de la table des étudiants à partir des nouveaux .csv
+
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
 def update_etudiants():
@@ -366,6 +375,8 @@ def update_etudiants():
         return redirect(url_for("index"))
 
     return render_template("update_etudiants.html")
+
+# Modification de la convention
 
 @app.route("/convention")
 @login_required
@@ -395,6 +406,8 @@ def upload_convention():
         file.save(chemin)
 
     return redirect(url_for("modification_convention"))
+
+# Génération de la convention pour un élève
 
 @app.route('/convention/generation', methods=['GET', 'POST'])
 @login_required
@@ -462,10 +475,7 @@ def generation_convention():
 
     return render_template('convention_generation.html')
 
-@app.route("/mail")
-@login_required
-def mail():
-    return render_template("mail.html")
+#-----
 
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
