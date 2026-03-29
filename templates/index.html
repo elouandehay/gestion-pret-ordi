@@ -15,6 +15,7 @@
     <a class="action-btn" href="{{ url_for('modification_convention') }}">Modifier la convention</a>
 </div>
 
+
 {# Barre d'actions : Undo / Redo / Logs / Sauvegardes (ton fichier) #}
 <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
     <form action="{{ url_for('undo_last_action') }}" method="post">
@@ -25,6 +26,75 @@
                     display: flex; align-items: center; gap: 5px;
                     {% if can_undo %}
                         background-color: #ffc107; color: black; border: 1px solid #d39e00; cursor: pointer; opacity: 1;
+
+      <a class="action-btn" href="{{ url_for('generation_convention') }}">
+          Générer une convention
+      </a>
+
+      <a class="action-btn" href="{{ url_for('update_etudiants') }}">
+          Mettre à jour les étudiants
+      </a>
+
+      <a class="action-btn" href="{{ url_for('ajouter_modele') }}">
+          Ajouter des ordinateurs
+      </a>
+
+      <a class="action-btn" href="{{ url_for('programmation_mails') }}">
+          Programmer l'envoi de mails
+      </a>
+
+      <a class="action-btn" href="{{ url_for('modification_convention') }}">
+          Modifier la convention
+      </a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Numero de serie du pc</th>
+                <th>Numero d'inventaire du pc</th>
+                <th>Modèle</th>
+                <th>Date de sortie</th>
+                <th>État</th>
+                <th>Action</th>
+                <th>Caution</th>
+                <th>Commentaires</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pc in ordinateurs %}
+            <tr>
+                <td>{{ pc['numero_serie'] }}</td>
+                <td>{{ pc['numero_inventaire'] }}</td>
+                <td>{{ pc['modele'] }}</td>
+                <td>{{ pc['date_sortie'] }}</td>
+                <td>
+                    {% if pc['dispo'] == 1 %}
+                        <span class="disponible">🟢 Disponible</span>
+                    {% elif pc['dispo'] == 0 %}
+                        <span class="emprunte">🔴 Emprunté{% if pc['prenom'] and pc['nom'] %} par {{ pc['prenom'] }} {{ pc['nom'] }}{% endif %}</span>
+
+                    {% elif pc['dispo'] == 2 %}
+                        <span style="color: orange;">🟠 En réparation</span></span>
+                    {% endif %}
+                </td>
+                <td style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    {% if pc['dispo'] == 1 %}
+                        <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                            <input type="text" name="eleve" placeholder="Nom de l'élève" required>
+                            <button type="submit">Prêter</button>
+                        </form>
+                    {% elif pc['dispo'] == 0 %}
+                        <form action="{{ url_for('rendre', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                            <input type="text" name="commentaire" placeholder="État du PC" required>
+                            <button type="submit">Marquer comme rendu</button>
+                        </form>
+                    {% endif %}
+
+                    {% if pc['dispo'] == 1 %}
+                    <form action="{{ url_for('supprimer', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet ordinateur ?');">
+                        <button type="submit">Supprimer l'odi de la base</button>
+                    </form>
+
                     {% else %}
                         background-color: transparent; color: #aaa; border: 1px solid #ccc; cursor: not-allowed; opacity: 0.5;
                     {% endif %}

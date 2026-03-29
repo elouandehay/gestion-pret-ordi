@@ -51,7 +51,7 @@ Ci-après désignée « l’INSA » \\
 
 Madame / Monsieur \textbf{ {{ nom }} {{ prenom }} } \\
 Inscrit(e) en (intitulé du diplôme) Spécialité Informatique \\
-Année d’étude : {{ annee_etude }} \\
+Année d’étude : {{ annee_etude }} année\\
 N° INE : {{ ine }} \\
 
 Désigné ci-dessous « le bénéficiaire ». \\
@@ -70,7 +70,7 @@ L'attribution du matériel est décidée par une commission du département INFO
 Lors d’un prêt, le bénéficiaire doit fournir les pièces suivantes :
 \begin{itemize}
     \item la convention de prêt d'ordinateurs portables, datée et signée,
-    \item un chèque de caution de 110€ ou un virement bancaire auprès de l’agence comptable de l’INSA Rennes, à l’exception des étudiants boursiers.
+    \item un virement bancaire d'un montant de 110€ auprès de l’agence comptable de l’INSA Rennes, à l’exception des étudiants boursiers.
 \end{itemize}
 
 Si le virement bancaire est choisi, indiquer sur le libellé du virement « PCINFO Nom Prénom ».\\
@@ -90,9 +90,9 @@ Si le virement bancaire est choisi, indiquer sur le libellé du virement « PCIN
 Le bénéficiaire déclare avoir reçu en main propre : \\
 Description du matériel, description technique, dont accessoires :
 \begin{itemize}
-    \item Désignation matériel : «Désignation\_matériel»
-    \item Numéro d’inventaire : «N\_INVENTAIRE»
-    \item Numéro de série : «N\_SERIE»
+  \item Désignation matériel : {{ modele }}
+  \item Numéro d’inventaire : {{ numero_inventaire }}
+  \item Numéro de série : {{ numero_serie }}
 \end{itemize}
 
 %----------------------------------------------

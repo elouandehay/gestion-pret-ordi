@@ -141,4 +141,42 @@
 
 <a href="{{ url_for('index') }}">Retour à l'accueil</a>
 
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Gestion du modèle de convention (.tex)</h2>
+
+<div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
+  <p>Vous pouvez télécharger le modèle actuel de convention au format LaTeX :</p>
+</div>
+
+<div style="text-align:center; margin-top:10px;">
+    <a href="{{ url_for('telecharger_convention') }}"
+        style="background-color:#28a745; color:white; text-decoration:none; padding:10px 20px; border-radius:5px;">
+        📄 Télécharger le fichier .tex actuel
+    </a>
+</div>
+
+<h3>Remplacer le modèle</h3>
+
+<form action="{{ url_for('upload_convention') }}" method="post" enctype="multipart/form-data">
+
+    <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
+        <label for="file_tex">Nouveau fichier de convention (.tex) :</label>
+        <input type="file" id="file_tex" name="file_tex" accept=".tex" required>
+    </div>
+
+    <div style="text-align:center; margin-top:10px;">
+        <button type="submit"
+                style="background-color:#007bff; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:16px;">
+            💾 Remplacer le modèle de convention
+        </button>
+    </div>
+
+</form>
+
+<div style="margin-top:20px;">
+    <a href="{{ url_for('index') }}">← Retour à l'accueil</a>
+</div>
+
 {% endblock %}

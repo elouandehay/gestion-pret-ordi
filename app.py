@@ -9,7 +9,15 @@ import shutil
 import threading
 from werkzeug.utils import secure_filename
 
+<<<<<<< HEAD
 from Convention.generation_convention import generer_convention
+=======
+import os
+from flask import request, redirect, url_for, render_template, send_file
+from werkzeug.utils import secure_filename
+
+from Convention.generation_convention import generer_convention 
+>>>>>>> ab82cbe41a8832b57c459e763d2f2cb6b21d18c4
 from update_etudiants import process_etudiants
 
 app = Flask(__name__)
@@ -333,9 +341,15 @@ def ajouter_pc_individuel():
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
 
+#-----
 
+# Programmation de l'envoye de mails
 
-
+@app.route("/mail")
+@login_required
+def mail():
+    return render_template("mail.html")
+>>>>>>> ab82cbe41a8832b57c459e763d2f2cb6b21d18c4
 
 @app.route("/mail", methods=["GET", "POST"])
 @login_required
@@ -394,7 +408,6 @@ def programmation_mails():
         mails_envoyes=mails_envoyes
     )
 
-
 @app.route("/mail/supprimer/<int:id>")
 @login_required
 def supprimer_mail(id):
@@ -407,7 +420,6 @@ def supprimer_mail(id):
     conn.close()
 
     return redirect(url_for("programmation_mails"))
-    
 
 @app.route("/mail/modifier/<int:id>", methods=["GET", "POST"])
 @login_required
@@ -440,6 +452,7 @@ def modifier_mail(id):
 
     return render_template("modifier_mail.html", mail=mail)
 
+
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
 def supprimer(numero_serie):
@@ -469,7 +482,9 @@ def supprimer(numero_serie):
 
 
 
+
 # Update de la table des étudiants à partir des nouveaux .csv
+
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
 def update_etudiants():
@@ -490,8 +505,6 @@ def update_etudiants():
 
     return render_template("update_etudiants.html")
 
-
-
 # Modification de la convention
 
 @app.route("/convention")
@@ -510,8 +523,6 @@ def telecharger_convention():
         as_attachment=True,
         download_name="convention.tex"
     )
-
-
 @app.route("/convention/upload", methods=["POST"])
 @login_required
 def upload_convention():
@@ -591,6 +602,24 @@ def generation_convention():
     return render_template('convention_generation.html')
         
 
+@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
+@login_required
+def supprimer(numero_serie):
+    conn = get_db_connection()
+
+    # Vérifier si l'ordinateur est emprunté
+    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
+    if pret:
+        conn.close()
+        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
+
+    # Sinon, supprimer l'ordinateur
+    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+    
+    
 @app.route('/valider-caution-prof/<numero_serie>', methods=['POST'])
 @login_required
 def valider_caution_prof(numero_serie):
@@ -761,7 +790,7 @@ def annuler_log(log_id):
 
 
 @app.route('/backups')
-@login_required
+@login_required 
 def backups():
     fichiers = sorted(
         [f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')],

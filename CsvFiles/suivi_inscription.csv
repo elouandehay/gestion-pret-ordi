@@ -1,0 +1,22 @@
+Code Apprenant;Nom;Prénom;Date de naissance;N°INE;Email;Témoin Doublon potentiel;Statut inscription;Code PIA;Libellé PIA;Période de mise en œuvre;Témoin bourse;Témoin 'inclus dans un dossier';Date dernière modification;Nationalité Apprenant;Régime Inscription
+9001;Martin;Lucas;2003-05-12;0009001;lucas.martin@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-3INF
+9002;Durand;Emma;2004-02-28;0009002;emma.durand@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-3INF
+9003;Bernard;Hugo;2002-11-07;0009003;hugo.bernard@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-3INF
+9004;Petit;Clara;2003-08-19;0009004;clara.petit@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-3INF
+9005;Robert;Nathan;2003-01-23;0009005;nathan.robert@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-3INF
+9006;Richard;Léa;2004-07-16;0009006;lea.richard@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-3INF
+9007;Moreau;Thomas;2002-12-05;0009007;thomas.moreau@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-3INF
+9101;Girard;Antoine;2003-03-11;0009101;antoine.girard@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-4INF
+9102;Bonnet;Laura;2004-10-22;0009102;laura.bonnet@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-4INF
+9103;Andre;Paul;2003-06-05;0009103;paul.andre@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-4INF
+9104;Francois;Chloe;2004-01-15;0009104;chloe.francois@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-4INF
+9105;Legrand;Maxime;2003-09-28;0009105;maxime.legrand@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-4INF
+9106;Gauthier;Julie;2002-05-30;0009106;julie.gauthier@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-4INF
+9107;Garcia;Theo;2004-08-03;0009107;theo.garcia@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-4INF
+9201;Roux;Alexandre;2003-02-19;0009201;alexandre.roux@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-5INF
+9202;Vincent;Marie;2004-07-14;0009202;marie.vincent@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-5INF
+9203;Fournier;Lucas;2003-11-09;0009203;lucas.fournier@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-5INF
+9204;Morel;Elise;2004-03-27;0009204;elise.morel@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-5INF
+9205;Dupont;Adrien;2002-12-12;0009205;adrien.dupont@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-5INF
+9206;Fontaine;Sarah;2003-05-05;0009206;sarah.fontaine@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Oui;Oui;2026-03-17;Française;IRE-ING-5INF
+9207;Clement;Noah;2004-09-21;0009207;noah.clement@insa-rennes.fr;Non;Inscrit;P01;Informatique;2024-2025;Non;Oui;2026-03-17;Française;IRE-ING-5INF
