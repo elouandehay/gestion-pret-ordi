@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}{% endwith %}
+
+<div style="padding: 20px;">
+    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+        <a href="{{ url_for('index') }}" style="background-color: #6c757d; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+            ← Retour
+        </a>
+        <h2 style="margin: 0;">📋 Historique des modifications</h2>
+    </div>
+
+    {% if logs %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #343a40; color: white;">
+                <th style="padding: 10px; text-align: left;">#</th>
+                <th style="padding: 10px; text-align: left;">Date & Heure</th>
+                <th style="padding: 10px; text-align: left;">Admin</th>
+                <th style="padding: 10px; text-align: left;">Action</th>
+                <th style="padding: 10px; text-align: left;">Annuler</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr style="border-bottom: 1px solid #dee2e6; {% if loop.index is odd %}background-color: #f8f9fa;{% endif %}">
+                <td style="padding: 10px;">{{ log['id'] }}</td>
+                <td style="padding: 10px;">{{ log['timestamp'] }}</td>
+                <td style="padding: 10px;"><strong>{{ log['admin_name'] }}</strong></td>
+                <td style="padding: 10px;">{{ log['description'] }}</td>
+                <td style="padding: 10px;">
+                    <form action="{{ url_for('annuler_log', log_id=log['id']) }}" method="post"
+                          onsubmit="return confirm('Annuler cette action ?');">
+                        <button type="submit"
+                                style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            ↩ Annuler
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="color: grey;">Aucune action enregistrée pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}
