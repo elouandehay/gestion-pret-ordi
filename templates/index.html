@@ -1,144 +1,191 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div style="text-align: right; padding: 10px;">
-        Connecté en tant que <strong>{{ session['user'] }}</strong> | 
-        <a href="{{ url_for('logout') }}" style="color: red;">Se déconnecter</a>
-    </div>
-    <hr>
-    <h2>État du parc informatique</h2>
-    <div class="actions-menu">
+<div style="text-align: right; padding: 10px;">
+    Connecté en tant que <strong>{{ session['user'] }}</strong> |
+    <a href="{{ url_for('logout') }}" style="color: red;">Se déconnecter</a>
+</div>
+<hr>
+<h2>État du parc informatique</h2>
+<div class="actions-menu">
+    <a class="action-btn" href="{{ url_for('generation_convention') }}">Générer une convention</a>
+    <a class="action-btn" href="{{ url_for('update_etudiants') }}">Mettre à jour les étudiants</a>
+    <a class="action-btn" href="{{ url_for('ajouter_modele') }}">Ajouter des ordinateurs</a>
+    <a class="action-btn" href="{{ url_for('programmation_mails') }}">Programmer l'envoi de mails</a>
+    <a class="action-btn" href="{{ url_for('modification_convention') }}">Modifier la convention</a>
+</div>
 
-      <a class="action-btn" href="{{ url_for('generation_convention') }}">
-          Générer une convention
-      </a>
+<table>
+    <thead>
+    <tr>
+        <th>Numero de serie du pc</th>
+        <th>Numero d'inventaire du pc</th>
+        <th>Modèle</th>
+        <th>Date de sortie</th>
+        <th>État</th>
+        <th>Action</th>
+        <th>Caution</th>
+        <th>Commentaires</th>
+        <th>Historique</th>
+    </tr>
+    <tr id="filterRow">
+        <th><input type="text" placeholder="Filtrer..." class="col-filter" data-col="0"></th>
+        <th><input type="text" placeholder="Filtrer..." class="col-filter" data-col="1"></th>
+        <th><input type="text" placeholder="Filtrer..." class="col-filter" data-col="2"></th>
+        <th><input type="text" placeholder="Filtrer..." class="col-filter" data-col="3"></th>
+        <th><input type="text" placeholder="Filtrer..." class="col-filter" data-col="4"></th>
+        <th></th>
+        <th>
+            <select class="col-filter" data-col="6">
+                <option value="">Toutes</option>
+                <option value="prof">Caution validée Prof</option>
+                <option value="compta">Caution validée Comptable</option>
+            </select>
+        </th>
+        <th></th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for pc in ordinateurs %}
+    <tr>
+        <td>{{ pc['numero_serie'] }}</td>
+        <td>{{ pc['numero_inventaire'] }}</td>
+        <td>{{ pc['modele'] }}</td>
+        <td>{{ pc['date_sortie'] }}</td>
+        <td>
+            {% if pc['dispo'] == 1 %}
+            <span class="disponible">🟢 Disponible</span>
+            {% elif pc['dispo'] == 0 %}
+            <span class="emprunte">🔴 Emprunté{% if pc['prenom'] and pc['nom'] %} par {{ pc['prenom'] }} {{ pc['nom'] }}{% endif %}</span>
+            {% elif pc['dispo'] == 2 %}
+            <span style="color: orange;">🟠 En réparation</span>
+            {% endif %}
+        </td>
+        <td style="display: flex; gap: 5px; flex-wrap: wrap;">
+            {% if pc['dispo'] == 1 %}
+            <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                <input type="text" name="eleve" placeholder="Nom de l'élève" required>
+                <button type="submit">Prêter</button>
+            </form>
+            {% elif pc['dispo'] == 0 %}
+            <form action="{{ url_for('rendre', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                <input type="text" name="commentaire" placeholder="État du PC" required>
+                <button type="submit">Marquer comme rendu</button>
+            </form>
+            {% endif %}
 
-      <a class="action-btn" href="{{ url_for('update_etudiants') }}">
-          Mettre à jour les étudiants
-      </a>
+            {% if pc['dispo'] == 1 %}
+            <form action="{{ url_for('supprimer', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet ordinateur ?');">
+                <button type="submit">Supprimer l'ordi de la base</button>
+            </form>
+            {% else %}
+            <span style="color: grey;">Suppression impossible prêt en cours</span>
+            {% endif %}
 
-      <a class="action-btn" href="{{ url_for('ajouter_modele') }}">
-          Ajouter des ordinateurs
-      </a>
+            {% if pc['dispo'] == 1 %}
+            <form action="{{ url_for('envoyer_reparation', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                <button type="submit">Envoyer en réparation</button>
+            </form>
+            {% elif pc['dispo'] == 2 %}
+            <form action="{{ url_for('reparation_terminee', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
+                <button type="submit">Réparation terminée</button>
+            </form>
+            {% endif %}
+        </td>
+        <td data-prof="{{ pc['caution_prof_validee'] }}" data-compta="{{ pc['caution_compta_validee'] }}">
+            {% if pc['dispo'] == 0 %}
+            {% if pc['caution_prof_validee'] == 1 %}
+            ✅ Prof
+            {% else %}
+            ⏳ Prof
+            {% endif %}
+            <br>
+            {% if pc['caution_compta_validee'] == 1 %}
+            ✅ Comptable
+            {% else %}
+            ⏳ Comptable
+            {% endif %}
 
-      <a class="action-btn" href="{{ url_for('programmation_mails') }}">
-          Programmer l'envoi de mails
-      </a>
+            {% if pc['caution_prof_validee'] == 0 %}
+            <form action="{{ url_for('valider_caution_prof', numero_serie=pc['numero_serie']) }}" method="post">
+                <button type="submit">Valider caution (Prof)</button>
+            </form>
+            {% endif %}
 
-      <a class="action-btn" href="{{ url_for('modification_convention') }}">
-          Modifier la convention
-      </a>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Numero de serie du pc</th>
-                <th>Numero d'inventaire du pc</th>
-                <th>Modèle</th>
-                <th>Date de sortie</th>
-                <th>État</th>
-                <th>Action</th>
-                <th>Caution</th>
-                <th>Commentaires</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pc in ordinateurs %}
-            <tr>
-                <td>{{ pc['numero_serie'] }}</td>
-                <td>{{ pc['numero_inventaire'] }}</td>
-                <td>{{ pc['modele'] }}</td>
-                <td>{{ pc['date_sortie'] }}</td>
-                <td>
-                    {% if pc['dispo'] == 1 %}
-                        <span class="disponible">🟢 Disponible</span>
-                    {% elif pc['dispo'] == 0 %}
-                        <span class="emprunte">🔴 Emprunté{% if pc['prenom'] and pc['nom'] %} par {{ pc['prenom'] }} {{ pc['nom'] }}{% endif %}</span>
+            {% if pc['caution_compta_validee'] == 0 and pc['caution_prof_validee'] == 1 %}
+            <form action="{{ url_for('valider_caution_compta', numero_serie=pc['numero_serie']) }}" method="post">
+                <button type="submit">Valider caution (Comptable)</button>
+            </form>
+            {% endif %}
+            {% else %}
+            <span style="color: grey;">Pas de caution, ordinateur non prêté</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if pc['numero_serie'] in commentaires_dict %}
+            <ul>
+                {% for c in commentaires_dict[pc['numero_serie']] %}
+                <li>{{ c['date_commentaire'] }} : {{ c['commentaire'] }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            Aucun commentaire
+            {% endif %}
+            <form action="{{ url_for('ajouter_commentaire', numero_serie=pc['numero_serie']) }}" method="post" style="margin-top:5px;">
+                <input type="text" name="commentaire" placeholder="Ajouter un commentaire" required>
+                <button type="submit">Envoyer</button>
+            </form>
+        </td>
+        <td>
+            <a href="{{ url_for('historique', numero_serie=pc['numero_serie']) }}">
+                <button type="button">Historique de prêt</button>
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
 
-                    {% elif pc['dispo'] == 2 %}
-                        <span style="color: orange;">🟠 En réparation</span></span>
-                    {% endif %}
-                </td>
-                <td style="display: flex; gap: 5px; flex-wrap: wrap;">
-                    {% if pc['dispo'] == 1 %}
-                        <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                            <input type="text" name="eleve" placeholder="Nom de l'élève" required>
-                            <button type="submit">Prêter</button>
-                        </form>
-                    {% elif pc['dispo'] == 0 %}
-                        <form action="{{ url_for('rendre', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                            <input type="text" name="commentaire" placeholder="État du PC" required>
-                            <button type="submit">Marquer comme rendu</button>
-                        </form>
-                    {% endif %}
+<script>
+    const filters = document.querySelectorAll('.col-filter');
 
-                    {% if pc['dispo'] == 1 %}
-                    <form action="{{ url_for('supprimer', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet ordinateur ?');">
-                        <button type="submit">Supprimer l'odi de la base</button>
-                    </form>
-                    {% else %}
-                    <span style="color: grey;">Suppression impossible prêt en court</span>
-                    {% endif %}
+    filters.forEach(input => {
+        input.addEventListener('keyup', filterTable);
+        input.addEventListener('change', filterTable);
+    });
 
-                    {% if pc['dispo'] == 1 %}
-                        <form action="{{ url_for('envoyer_reparation', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                            <button type="submit">Envoyer en réparation</button>
-                        </form>
-                    {% elif pc['dispo'] == 2 %}
-                        <form action="{{ url_for('reparation_terminee', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                            <button type="submit">Réparation terminée</button>
-                        </form>
-                    {% endif %}
+    function filterTable(){
+        const rows = document.querySelectorAll('table tbody tr');
 
-                </td>
-                <td>
-                    {% if pc['dispo'] == 0 %}
-                        {% if pc['caution_prof_validee'] == 1 %}
-                            ✅ Prof
-                        {% else %}
-                            ⏳ Prof
-                        {% endif %}
+        rows.forEach(row => {
+            let show = true;
 
-                        <br>
+            filters.forEach(filter => {
+                const colIndex = filter.dataset.col;
+                const value = filter.value.toLowerCase();
 
-                        {% if pc['caution_compta_validee'] == 1 %}
-                            ✅ Comptable
-                        {% else %}
-                            ⏳ Comptable
-                        {% endif %}
+                if(colIndex == 6 && value){
+                    const prof = row.cells[colIndex].dataset.prof;     // "0" ou "1"
+                    const compta = row.cells[colIndex].dataset.compta; // "0" ou "1"
+                    const etat = row.cells[4].textContent.toLowerCase();
 
-                        {% if pc['caution_prof_validee'] == 0 %}
-                            <form action="{{ url_for('valider_caution_prof', numero_serie=pc['numero_serie']) }}" method="post">
-                                <button type="submit">Valider caution (Prof)</button>
-                            </form>
-                            {% endif %}
+                    if(!etat.includes("emprunt")){
+                        show = false;
+                        return;
+                    }
 
-                        {% if pc['caution_compta_validee'] == 0 and pc['caution_prof_validee'] == 1 %}
-                        <form action="{{ url_for('valider_caution_compta', numero_serie=pc['numero_serie']) }}" method="post">
-                            <button type="submit">Valider caution (Comptable)</button>
-                        </form>
-                        {% endif %}
-                    {% else %}
-                        <span style="color: grey;">Pas de caution, ordinateur non prêté</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if pc['numero_serie'] in commentaires_dict %}
-                        <ul>
-                        {% for c in commentaires_dict[pc['numero_serie']] %}
-                            <li>{{ c['date_commentaire'] }} : {{ c['commentaire'] }}</li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        Aucun commentaire
-                    {% endif %}
-                    <form action="{{ url_for('ajouter_commentaire', numero_serie=pc['numero_serie']) }}" method="post" style="margin-top:5px;">
-                        <input type="text" name="commentaire" placeholder="Ajouter un commentaire" required>
-                        <button type="submit">Envoyer</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    if(value === "prof" && !(prof === "1" && compta === "0")) show = false;
+                    if(value === "compta" && !(compta === "1")) show = false;
+                }
+                else if(value){
+                    const cellText = row.cells[colIndex]?.textContent.toLowerCase() || "";
+                    if(!cellText.includes(value)) show = false;
+                }
+            });
+
+            row.style.display = show ? '' : 'none';
+        });
+    }
+</script>
 {% endblock %}

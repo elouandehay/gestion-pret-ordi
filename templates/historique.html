@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Historique du PC : {{ numero_serie }}</h2>
+<a href="{{ url_for('index') }}">← Retour à l'accueil</a>
+<table border="1" style="margin-top: 10px;">
+    <thead>
+    <tr>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Email</th>
+        <th>Date de prêt</th>
+        <th>Date de retour</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for h in historique %}
+    <tr>
+        <td>{{ h['nom'] }}</td>
+        <td>{{ h['prenom'] }}</td>
+        <td>{{ h['email'] }}</td>
+        <td>{{ h['date_pret'] }}</td>
+        <td>{{ h['date_retour'] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Aucun historique pour ce PC</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

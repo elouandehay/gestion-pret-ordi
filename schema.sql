@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS commentaires;
 DROP TABLE IF EXISTS ordinateurs;
 DROP TABLE IF EXISTS etudiants;
 DROP TABLE IF EXISTS administrateurs;
-
+DROP TABLE IF EXISTS historique_prets;
 -- Table Administrateurs
 CREATE TABLE administrateurs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,4 +67,16 @@ CREATE TABLE mails (
   date_envoi DATETIME NOT NULL,
   envoye INTEGER DEFAULT 0,
   FOREIGN KEY (cible_id) REFERENCES cibles_mails(id)
+);
+
+CREATE TABLE historique_prets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ordinateur_id TEXT NOT NULL,
+    nom TEXT NOT NULL,
+    prenom TEXT NOT NULL,
+    email TEXT NOT NULL,
+
+    date_pret DATETIME NOT NULL,
+    date_retour DATETIME NOT NULL,
+    FOREIGN KEY (ordinateur_id) REFERENCES ordinateurs(numero_serie)
 );

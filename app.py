@@ -40,7 +40,26 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
     
-    
+@app.route('/historique/<path:numero_serie>')
+@login_required
+def historique(numero_serie):
+    conn = get_db_connection()
+
+    historique = conn.execute("""
+        SELECT nom, prenom, email, date_pret, date_retour
+        FROM historique_prets
+        WHERE ordinateur_id = ?
+        ORDER BY date_retour DESC
+    """, (numero_serie,)).fetchall()
+
+    conn.close()
+
+    return render_template(
+        'historique.html',
+        historique=historique,
+        numero_serie=numero_serie
+    )
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -108,44 +127,53 @@ def index():
     return render_template('index.html',ordinateurs=ordinateurs, commentaires_dict=commentaires_dict)
 
 
-
-#emprunter un ordinateur
+# Emprunter un ordinateur (acceptant aussi les élèves non présents dans la base)
 @app.route('/emprunter/<path:numero_serie>', methods=('POST',))
 @login_required
 def emprunter(numero_serie):
-    eleve = request.form['eleve']
+    eleve = request.form['eleve'].strip()
 
-    if eleve:
-        conn = get_db_connection()
+    if not eleve:
+        flash("Veuillez saisir le nom de l'élève.")
+        return redirect(url_for('index'))
 
-        # Vérifier si l'étudiant existe déjà
-        etudiant = conn.execute("SELECT id FROM etudiants WHERE nom || ' ' || prenom = ?", (eleve,)).fetchone()
-        if etudiant is None:
-            if " " in eleve:
-                nom, prenom = eleve.split(" ", 1)
-            else:
-                # S'il n'y a pas d'espace, on met tout dans le nom et rien dans le prénom
-                nom = eleve
-                prenom = ""
-            conn.execute("INSERT INTO etudiants (nom, prenom, email, boursier) VALUES (?, ?, '', 0)", (nom, prenom))
-            etudiant_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-        else:
-            etudiant_id = etudiant['id']
+    # Séparer le nom et le prénom si possible
+    parts = eleve.split(' ', 1)
+    nom = parts[0].strip()
+    prenom = parts[1].strip() if len(parts) > 1 else ""
 
-        # Créer le prêt avec cautions initialisées à 0
-        conn.execute("""
-            INSERT INTO prets (etudiant_id, ordinateur_id, caution_prof_validee, caution_compta_validee)
-            VALUES (?, ?, 0, 0)
-        """, (etudiant_id, numero_serie))
+    conn = get_db_connection()
 
-        # Marquer l'ordinateur comme emprunté
-        conn.execute('UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?', (numero_serie,))
-        conn.commit()
-        conn.close()
+    # Chercher l'étudiant existant
+    etudiant = conn.execute(
+        "SELECT id FROM etudiants WHERE nom = ? AND prenom = ?",
+        (nom, prenom)
+    ).fetchone()
+
+    if etudiant is None:
+        # Créer un étudiant temporaire
+        cur = conn.execute("""
+            INSERT INTO etudiants (nom, prenom, email, boursier, regime_scolarite)
+            VALUES (?, ?, '', 0, 'inconnu')
+        """, (nom, prenom))
+        etudiant_id = cur.lastrowid
+    else:
+        etudiant_id = etudiant['id']
+
+    # Créer le prêt avec cautions initialisées à 0
+    conn.execute("""
+        INSERT INTO prets (etudiant_id, ordinateur_id, caution_prof_validee, caution_compta_validee)
+        VALUES (?, ?, 0, 0)
+    """, (etudiant_id, numero_serie))
+
+    # Marquer l'ordinateur comme emprunté
+    conn.execute('UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?', (numero_serie,))
+    conn.commit()
+    conn.close()
 
     return redirect(url_for('index'))
 
-#Action : Rendre un PC
+# Action : Rendre un PC
 @app.route('/rendre/<path:numero_serie>', methods=('GET', 'POST'))
 @login_required
 def rendre(numero_serie):
@@ -164,10 +192,26 @@ def rendre(numero_serie):
             (numero_serie, commentaire)
         )
 
+        # Récupérer le prêt actuel avec les infos de l'étudiant
+        pret = conn.execute("""
+            SELECT p.etudiant_id, e.nom, e.prenom, e.email, p.date_pret
+            FROM prets p
+            LEFT JOIN etudiants e ON p.etudiant_id = e.id
+            WHERE p.ordinateur_id = ?
+        """, (numero_serie,)).fetchone()
+
+        # Si le prêt existe, l'enregistrer dans l'historique
+        if pret:
+            conn.execute("""
+                INSERT INTO historique_prets (ordinateur_id, nom, prenom, email, date_pret, date_retour)
+                VALUES (?, ?, ?, ?, ?, CURRENT_DATE)
+            """, (numero_serie, pret['nom'], pret['prenom'], pret['email'], pret['date_pret']))
+
         # Supprimer le prêt en cours
         conn.execute("DELETE FROM prets WHERE ordinateur_id = ?", (numero_serie,))
         # Marquer comme disponible
         conn.execute('UPDATE ordinateurs SET dispo = 1 WHERE numero_serie = ?', (numero_serie,))
+
         conn.commit()
         conn.close()
 
@@ -176,7 +220,6 @@ def rendre(numero_serie):
     # GET : afficher le formulaire de commentaire obligatoire
     conn.close()
     return render_template('commenter.html', numero_serie=numero_serie)
-
 #la méthode ajouter n'est plus utilisé pour l'instant
 @app.route('/ajouter', methods=['GET', 'POST'])
 @login_required
