@@ -8,17 +8,12 @@ import os
 import shutil
 import threading
 from werkzeug.utils import secure_filename
-
-<<<<<<< HEAD
 from Convention.generation_convention import generer_convention
-=======
-import os
 from flask import request, redirect, url_for, render_template, send_file
 from werkzeug.utils import secure_filename
-
-from Convention.generation_convention import generer_convention 
->>>>>>> ab82cbe41a8832b57c459e763d2f2cb6b21d18c4
 from update_etudiants import process_etudiants
+# import yagmail
+# from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.secret_key = '3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
@@ -341,7 +336,6 @@ def ajouter_pc_individuel():
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
 
-#-----
 
 # Programmation de l'envoye de mails
 
@@ -349,7 +343,7 @@ def ajouter_pc_individuel():
 @login_required
 def mail():
     return render_template("mail.html")
->>>>>>> ab82cbe41a8832b57c459e763d2f2cb6b21d18c4
+
 
 @app.route("/mail", methods=["GET", "POST"])
 @login_required
@@ -453,6 +447,70 @@ def modifier_mail(id):
     return render_template("modifier_mail.html", mail=mail)
 
 
+
+
+
+# Envoye des mails non-envoyes de la base
+
+
+
+# def envoyer_mails_programmes():
+# 
+#     conn = sqlite3.connect("database.db")
+#     conn.row_factory = sqlite3.Row
+#     cur = conn.cursor()
+# 
+#     now = datetime.now().strftime("%Y-%m-%d %H:%M")
+# 
+#     cur.execute("""
+#         SELECT * FROM mails
+#         WHERE envoye = 0 AND date_envoi <= ?
+#     """, (now,))
+# 
+#     mails = cur.fetchall()
+# 
+#     yag = yagmail.SMTP("tonmail@gmail.com", "mot_de_passe_app")
+# 
+#     for mail in mails:
+# 
+#         cible_id = mail["cible_id"]
+# 
+#         # déterminer les destinataires
+#         if cible_id == 1:  # retard
+#             cur.execute("SELECT email FROM etudiants WHERE retard = 1")
+# 
+#         elif cible_id == 2:  # tous
+#             cur.execute("SELECT email FROM etudiants")
+# 
+#         elif cible_id == 3:  # boursiers
+#             cur.execute("SELECT email FROM etudiants WHERE boursier = 1")
+# 
+#         emails = [row["email"] for row in cur.fetchall()]
+# 
+#         if emails:
+#             yag.send(
+#                 to=emails,
+#                 subject=mail["objet"],
+#                 contents=mail["contenu"]
+#             )
+# 
+#         # marquer comme envoyé
+#         cur.execute("""
+#             UPDATE mails
+#             SET envoye = 1
+#             WHERE id = ?
+#         """, (mail["id"],))
+# 
+#     conn.commit()
+#     conn.close()
+# 
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
+# scheduler.start()
+# 
+
+
+
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
 def supprimer(numero_serie):
@@ -479,7 +537,6 @@ def supprimer(numero_serie):
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
-
 
 
 
@@ -602,23 +659,6 @@ def generation_convention():
     return render_template('convention_generation.html')
         
 
-@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
-@login_required
-def supprimer(numero_serie):
-    conn = get_db_connection()
-
-    # Vérifier si l'ordinateur est emprunté
-    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
-    if pret:
-        conn.close()
-        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
-
-    # Sinon, supprimer l'ordinateur
-    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index'))
-    
     
 @app.route('/valider-caution-prof/<numero_serie>', methods=['POST'])
 @login_required
@@ -641,7 +681,7 @@ def valider_caution_compta(numero_serie):
     conn = get_db_connection()
     conn.execute("""
         UPDATE prets SET caution_compta_validee = 1
-        WHERE ordinateur_id = ? AND caution_prof_validee = 1,  AND date_retour > CURRENT_DATE
+        WHERE ordinateur_id = ? AND caution_prof_validee = 1 AND date_retour > CURRENT_DATE
     """, (numero_serie,))
 
     action = {'type': 'valider_caution_compta', 'numero_serie': numero_serie}
@@ -651,7 +691,6 @@ def valider_caution_compta(numero_serie):
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
-
 
 @app.route('/envoyer-reparation/<path:numero_serie>', methods=['POST'])
 @login_required
