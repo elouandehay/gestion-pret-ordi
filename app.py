@@ -166,6 +166,15 @@ def index():
         FROM commentaires
         ORDER BY date_commentaire DESC
     """).fetchall()
+
+
+    # Récupération des étudiants
+    etudiants = conn.execute("""
+           SELECT id, nom, prenom
+           FROM etudiants
+           ORDER BY nom, prenom
+       """).fetchall()
+
     conn.close()
 
     commentaires_dict = {}
@@ -174,10 +183,9 @@ def index():
             commentaires_dict[c['ordinateur_id']] = []
         commentaires_dict[c['ordinateur_id']].append(c)
 
-    return render_template('index.html', ordinateurs=ordinateurs, commentaires_dict=commentaires_dict, can_undo=can_undo, can_redo=can_redo)
+    return render_template('index.html', ordinateurs=ordinateurs, commentaires_dict=commentaires_dict, etudiants=etudiants, can_undo=can_undo, can_redo=can_redo)
 
 
-# Emprunter un ordinateur (acceptant aussi les élèves non présents dans la base)
 @app.route('/emprunter/<path:numero_serie>', methods=('POST',))
 @login_required
 def emprunter(numero_serie):
@@ -195,25 +203,41 @@ def emprunter(numero_serie):
     conn = get_db_connection()
     # Chercher l'étudiant existant
     etudiant = conn.execute(
-        "SELECT id FROM etudiants WHERE nom = ? AND prenom = ?",
+        "SELECT id, boursier FROM etudiants WHERE nom = ? AND prenom = ?",
         (nom, prenom)
     ).fetchone()
 
     if etudiant is None:
-        # Créer un étudiant temporaire
-        cur = conn.execute("""
-            INSERT INTO etudiants (nom, prenom, email, boursier, regime_scolarite)
-            VALUES (?, ?, '', 0, 'inconnu')
-        """, (nom, prenom))
-        etudiant_id = cur.lastrowid
-    else:
-        etudiant_id = etudiant['id']
+        flash("Cet étudiant n'existe pas dans la base. Impossible de lui prêter un ordinateur.")
+        conn.close()
+        return redirect(url_for('index'))
 
-    # Créer le prêt avec cautions initialisées à 0
+    etudiant_id = etudiant['id']
+
+    # Vérifier si l'étudiant a déjà un prêt en cours
+    pret_en_cours = conn.execute(
+        "SELECT COUNT(*) as nb FROM prets WHERE etudiant_id = ?",
+        (etudiant_id,)
+    ).fetchone()['nb']
+
+    if pret_en_cours > 0:
+        flash("Cet étudiant a déjà un ordinateur en prêt.")
+        conn.close()
+        return redirect(url_for('index'))
+
+    # Déterminer les cautions selon le statut boursier
+    if etudiant['boursier'] == 1:
+        caution_prof_validee = 1
+        caution_compta_validee = 1
+    else:
+        caution_prof_validee = 0
+        caution_compta_validee = 0
+
+    # Créer le prêt
     conn.execute("""
         INSERT INTO prets (etudiant_id, ordinateur_id, caution_prof_validee, caution_compta_validee)
-        VALUES (?, ?, 0, 0)
-    """, (etudiant_id, numero_serie))
+        VALUES (?, ?, ?, ?)
+    """, (etudiant_id, numero_serie, caution_prof_validee, caution_compta_validee))
 
     # Marquer l'ordinateur comme emprunté
     conn.execute('UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?', (numero_serie,))

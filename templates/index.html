@@ -110,7 +110,12 @@
         <td style="display: flex; gap: 5px; flex-wrap: wrap;">
             {% if pc['dispo'] == 1 %}
             <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                <input type="text" name="eleve" placeholder="Nom de l'élève" required>
+                <select name="eleve" required>
+                    <option value="">Sélectionnez un étudiant</option>
+                    {% for etu in etudiants %}
+                    <option value="{{ etu['nom'] }} {{ etu['prenom'] }}">{{ etu['prenom'] }} {{ etu['nom'] }}</option>
+                    {% endfor %}
+                </select>
                 <button type="submit">Prêter</button>
             </form>
             {% elif pc['dispo'] == 0 %}
