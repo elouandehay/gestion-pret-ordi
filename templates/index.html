@@ -110,12 +110,7 @@
         <td style="display: flex; gap: 5px; flex-wrap: wrap;">
             {% if pc['dispo'] == 1 %}
             <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                <select name="eleve" required>
-                    <option value="">Sélectionnez un étudiant</option>
-                    {% for etu in etudiants %}
-                    <option value="{{ etu['nom'] }} {{ etu['prenom'] }}">{{ etu['prenom'] }} {{ etu['nom'] }}</option>
-                    {% endfor %}
-                </select>
+                <input type="text" class="eleve-input" name="eleve" placeholder="Tapez un nom..." autocomplete="off" required>
                 <button type="submit">Prêter</button>
             </form>
             {% elif pc['dispo'] == 0 %}
@@ -240,4 +235,65 @@
         });
     }
 </script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    document.querySelectorAll('.eleve-input').forEach(input => {
+
+        const box = document.createElement('div');
+        box.classList.add('suggestions-box');
+        input.parentNode.appendChild(box);
+
+        input.addEventListener('input', async () => {
+            const q = input.value.trim();
+
+            if (q.length < 2) {
+                box.innerHTML = "";
+                return;
+            }
+
+            const res = await fetch(`/search_etudiants?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+
+            box.innerHTML = "";
+
+            data.forEach(etu => {
+                const div = document.createElement('div');
+                div.textContent = etu.nom + " " + etu.prenom;
+
+                div.onclick = () => {
+                    input.value = div.textContent;
+                    box.innerHTML = "";
+                };
+
+                box.appendChild(div);
+            });
+        });
+
+    });
+
+});
+</script>
+<style>
+.suggestions-box {
+    border: 1px solid #ccc;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.suggestions-box div {
+    padding: 5px;
+    cursor: pointer;
+}
+
+.suggestions-box div:hover {
+    background: #eee;
+}
+</style>
+
 {% endblock %}

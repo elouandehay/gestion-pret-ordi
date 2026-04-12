@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, request, redirect, url_for, render_template, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, request, \
+    redirect, url_for, render_template, send_file, jsonify
 from datetime import datetime
 import sqlite3
 from functools import wraps
@@ -184,6 +185,21 @@ def index():
         commentaires_dict[c['ordinateur_id']].append(c)
 
     return render_template('index.html', ordinateurs=ordinateurs, commentaires_dict=commentaires_dict, etudiants=etudiants, can_undo=can_undo, can_redo=can_redo)
+
+@app.route('/search_etudiants')
+def search_etudiants():
+    query = request.args.get('q', '').strip()
+
+    conn = get_db_connection()
+    etudiants = conn.execute("""
+        SELECT nom, prenom FROM etudiants
+        WHERE nom LIKE ? OR prenom LIKE ?
+        ORDER BY nom
+        LIMIT 10
+    """, (f"%{query}%", f"%{query}%")).fetchall()
+    conn.close()
+
+    return jsonify([dict(e) for e in etudiants])
 
 
 @app.route('/emprunter/<path:numero_serie>', methods=('POST',))
