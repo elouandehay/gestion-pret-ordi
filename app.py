@@ -381,58 +381,41 @@ def ajouter_pc_individuel():
 
 @app.route("/mail")
 @login_required
-def mail():
-    return render_template("mail.html")
-
-
-@app.route("/mail", methods=["GET", "POST"])
-@login_required
-def programmation_mails():
+def afficher_mails():
 
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    if request.method == "POST":
+    # DEBUG (OK mais à retirer après)
+    cur.execute("SELECT id, date_envoi FROM mails")
+    print(cur.fetchall())
 
-        cible = request.form["cible"]
-        objet = request.form["objet"]
-        contenu = request.form["contenu"]
-        date_envoi = request.form["date_envoi"]
-
-        # mapping entre le select HTML et les id de la table
-        mapping = {
-            "retard": 1,
-            "tous": 2,
-            "boursiers": 3
-        }
-
-        cible_id = mapping[cible]
-
-        cur.execute("""
-            INSERT INTO mails (cible_id, objet, contenu, date_envoi)
-            VALUES (?, ?, ?, ?)
-        """, (cible_id, objet, contenu, date_envoi))
-
-        conn.commit()
-
-    # mails programmés (envoye = 0)
+    # mails programmés (date future)
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, cibles_mails.cible
+        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
         FROM mails
-        JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE mails.envoye = 0
+        LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
+        WHERE datetime(mails.date_envoi) > datetime('now')
     """)
-    mails_programmes = cur.fetchall()
 
-    # mails envoyés (envoye = 1)
+    rows = cur.fetchall()
+    print("DEBUG PROGRAMMES:", rows)
+
+    mails_programmes = [dict(r) for r in rows]
+
+    # mails envoyés (date passée)
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, cibles_mails.cible
+        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
         FROM mails
-        JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE mails.envoye = 1
+        LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
+        WHERE datetime(mails.date_envoi) <= datetime('now')
     """)
-    mails_envoyes = cur.fetchall()
+
+    rows = cur.fetchall()
+    print("DEBUG ENVOYES:", rows)
+
+    mails_envoyes = [dict(r) for r in rows]
 
     conn.close()
 
@@ -441,6 +424,38 @@ def programmation_mails():
         mails_programmes=mails_programmes,
         mails_envoyes=mails_envoyes
     )
+
+@app.route("/mail/ajouter", methods=["POST"])
+@login_required
+def ajouter_mail():
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+
+    cible = request.form["cible"]
+    objet = request.form["objet"]
+    contenu = request.form["contenu"]
+    date_envoi = request.form["date_envoi"]
+
+    # conversion propre HTML -> SQLite
+    date_envoi = date_envoi.replace("T", " ") + ":00"
+
+    mapping = {
+        "retard": 1, 
+        "boursiers": 2 
+    }
+
+    cible_id = mapping[cible]
+
+    cur.execute("""
+        INSERT INTO mails (cible_id, objet, contenu, date_envoi, envoye)
+        VALUES (?, ?, ?, ?, 0)
+    """, (cible_id, objet, contenu, date_envoi))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("afficher_mails"))
 
 @app.route("/mail/supprimer/<int:id>")
 @login_required
@@ -453,7 +468,7 @@ def supprimer_mail(id):
     conn.commit()
     conn.close()
 
-    return redirect(url_for("programmation_mails"))
+    return redirect(url_for("afficher_mails"))
 
 @app.route("/mail/modifier/<int:id>", methods=["GET", "POST"])
 @login_required
@@ -477,7 +492,7 @@ def modifier_mail(id):
         conn.commit()
         conn.close()
 
-        return redirect(url_for("programmation_mails"))
+        return redirect(url_for("afficher_mails"))
 
     cur.execute("SELECT * FROM mails WHERE id = ?", (id,))
     mail = cur.fetchone()
@@ -486,13 +501,7 @@ def modifier_mail(id):
 
     return render_template("modifier_mail.html", mail=mail)
 
-
-
-
-
 # Envoye des mails non-envoyes de la base
-
-
 
 # def envoyer_mails_programmes():
 # 

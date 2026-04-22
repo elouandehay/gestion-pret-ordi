@@ -55,13 +55,11 @@
 
 <h3>Programmer un mail</h3>
 
-<form action="{{ url_for('programmation_mails') }}" method="post">
-
+<form action="{{ url_for('ajouter_mail') }}" method="post">
 
 <label for="cible">Cible :</label>
 <select id="cible" name="cible" required>
     <option value="retard">Étudiants n'ayant pas rendu le matériel</option>
-    <option value="tous">Tous les étudiants ayant emprunté</option>
     <option value="boursiers">Étudiants boursiers</option>
 </select>
 
@@ -94,7 +92,7 @@
 
     {% for mail in mails_programmes %}
       <tr>
-          <td>{{ mail.cible }}</td>
+          <td>{{ mail.cible_id }}</td>
           <td>{{ mail.objet }}</td>
           <td>{{ mail.date_envoi }}</td>
           <td class="actions">
