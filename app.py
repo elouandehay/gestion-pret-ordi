@@ -563,8 +563,6 @@ def modifier_mail(id):
 # scheduler.start()
 # 
 
-
-
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
 def supprimer(numero_serie):
@@ -591,8 +589,6 @@ def supprimer(numero_serie):
     conn.commit()
     conn.close()
     return redirect(url_for('index'))
-
-
 
 # Update de la table des étudiants à partir des nouveaux .csv
 
@@ -634,6 +630,7 @@ def telecharger_convention():
         as_attachment=True,
         download_name="convention.tex"
     )
+
 @app.route("/convention/upload", methods=["POST"])
 @login_required
 def upload_convention():

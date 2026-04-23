@@ -1,12 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.10.11)  15 MAR 2026 23:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.10.11)  23 APR 2026 11:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**Convention/conventions_generees/convention_230089401/convention_230089401.tex
-
-
-(./Convention/conventions_generees/convention_230089401/convention_230089401.te
-x
+**Convention/conventions_generees/convention_0009204/convention_0009204.tex
+(./Convention/conventions_generees/convention_0009204/convention_0009204.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -161,8 +158,8 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count267
 \l__pdf_internal_box=\box53
 )
-No file convention_230089401.aux.
-\openout1 = `convention_230089401.aux'.
+No file convention_0009204.aux.
+\openout1 = `convention_0009204.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
 LaTeX Font Info:    ... okay on input line 31.
@@ -277,27 +274,11 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <17.28> on input line 63.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <12> on input line 63.
-
-LaTeX Warning: File `INSA_logo.png' not found on input line 74.
-
-
-! Package pdftex.def Error: File `INSA_logo.png' not found: using draft setting
-.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.74 \end{itemize}
-                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 7
-4.
-(/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
-File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-)
+<../../INSA_logo.png, id=1, 284.06125pt x 88.33pt>
+File: ../../INSA_logo.png Graphic file (type png)
+<use ../../INSA_logo.png>
+Package pdftex.def Info: ../../INSA_logo.png  used on input line 74.
+(pdftex.def)             Requested size: 137.25372pt x 42.67912pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
@@ -306,66 +287,38 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-35.02916pt}.
 
-
-LaTeX Warning: File `INSA_graphic.png' not found on input line 74.
-
-
-! Package pdftex.def Error: File `INSA_graphic.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.74 \end{itemize}
-                  
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+<../../INSA_graphic.png, id=3, 95.35625pt x 88.33pt>
+File: ../../INSA_graphic.png Graphic file (type png)
+<use ../../INSA_graphic.png>
+Package pdftex.def Info: ../../INSA_graphic.png  used on input line 74.
+(pdftex.def)             Requested size: 46.07457pt x 42.67912pt.
 
 Package fancyhdr Warning: \footskip is too small (30.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
 (fancyhdr)                \setlength{\footskip}{47.02916pt}.
 
-[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+[1
 
-]
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <Convention/conventions_gen
+erees/convention_0009204/../../INSA_logo.png> <Convention/conventions_generees/
+convention_0009204/../../INSA_graphic.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 76--77
 
  []
 
-
-LaTeX Warning: File `INSA_RIB.png' not found on input line 83.
-
-
-! Package pdftex.def Error: File `INSA_RIB.png' not found: using draft setting.
-
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.83 }
-      
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-LaTeX Warning: File `INSA_logo.png' not found on input line 103.
-
-
-! Package pdftex.def Error: File `INSA_logo.png' not found: using draft setting
-.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.103 \begin{center}
-                    
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+<../../INSA_RIB.png, id=16, 1566.85374pt x 673.51625pt>
+File: ../../INSA_RIB.png Graphic file (type png)
+<use ../../INSA_RIB.png>
+Package pdftex.def Info: ../../INSA_RIB.png  used on input line 83.
+(pdftex.def)             Requested size: 409.71692pt x 176.11723pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 104.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 104.
+File: ../../INSA_logo.png Graphic file (type png)
+<use ../../INSA_logo.png>
+Package pdftex.def Info: ../../INSA_logo.png  used on input line 124.
+(pdftex.def)             Requested size: 137.25372pt x 42.67912pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
@@ -374,33 +327,16 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-35.02916pt}.
 
-
-LaTeX Warning: File `INSA_graphic.png' not found on input line 103.
-
-
-! Package pdftex.def Error: File `INSA_graphic.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.103 \begin{center}
-                    
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+File: ../../INSA_graphic.png Graphic file (type png)
+<use ../../INSA_graphic.png>
+Package pdftex.def Info: ../../INSA_graphic.png  used on input line 124.
+(pdftex.def)             Requested size: 46.07457pt x 42.67912pt.
 
 Package fancyhdr Warning: \footskip is too small (30.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
 (fancyhdr)                \setlength{\footskip}{47.02916pt}.
 
-[2]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 104.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 104.
-
+[2 <Convention/conventions_generees/convention_0009204/../../INSA_RIB.png>]
 Overfull \hbox (12.72108pt too wide) in paragraph at lines 130--131
 []\T1/cmr/m/n/12 4.4 L'INSA et plus précisément le département INFO ne peuvent 
 être tenus pour responsables
@@ -412,22 +348,10 @@ Overfull \hbox (14.60661pt too wide) in paragraph at lines 133--136
 atement remis au département
  []
 
-
-LaTeX Warning: File `INSA_logo.png' not found on input line 156.
-
-
-! Package pdftex.def Error: File `INSA_logo.png' not found: using draft setting
-.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.156     \item m
-                 atÃ©riel plus ancien : remboursement de la valeur vÃ©nale
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+File: ../../INSA_logo.png Graphic file (type png)
+<use ../../INSA_logo.png>
+Package pdftex.def Info: ../../INSA_logo.png  used on input line 174.
+(pdftex.def)             Requested size: 137.25372pt x 42.67912pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
@@ -436,22 +360,10 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-35.02916pt}.
 
-
-LaTeX Warning: File `INSA_graphic.png' not found on input line 156.
-
-
-! Package pdftex.def Error: File `INSA_graphic.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.156     \item m
-                 atÃ©riel plus ancien : remboursement de la valeur vÃ©nale
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+File: ../../INSA_graphic.png Graphic file (type png)
+<use ../../INSA_graphic.png>
+Package pdftex.def Info: ../../INSA_graphic.png  used on input line 174.
+(pdftex.def)             Requested size: 46.07457pt x 42.67912pt.
 
 Package fancyhdr Warning: \footskip is too small (30.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
@@ -472,22 +384,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 221--222
 
  []
 
-
-LaTeX Warning: File `INSA_logo.png' not found on input line 222.
-
-
-! Package pdftex.def Error: File `INSA_logo.png' not found: using draft setting
-.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.222 
-      
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+File: ../../INSA_logo.png Graphic file (type png)
+<use ../../INSA_logo.png>
+Package pdftex.def Info: ../../INSA_logo.png  used on input line 226.
+(pdftex.def)             Requested size: 137.25372pt x 42.67912pt.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
@@ -496,101 +396,41 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 (fancyhdr)                \addtolength{\topmargin}{-35.02916pt}.
 
-
-LaTeX Warning: File `INSA_graphic.png' not found on input line 222.
-
-
-! Package pdftex.def Error: File `INSA_graphic.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.222 
-      
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
+File: ../../INSA_graphic.png Graphic file (type png)
+<use ../../INSA_graphic.png>
+Package pdftex.def Info: ../../INSA_graphic.png  used on input line 226.
+(pdftex.def)             Requested size: 46.07457pt x 42.67912pt.
 
 Package fancyhdr Warning: \footskip is too small (30.0pt): 
 (fancyhdr)                Make it at least 47.02916pt, for example:
 (fancyhdr)                \setlength{\footskip}{47.02916pt}.
 
-[4]
-
-LaTeX Warning: File `INSA_logo.png' not found on input line 226.
-
-
-! Package pdftex.def Error: File `INSA_logo.png' not found: using draft setting
-.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.226 \end{document}
-                    
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 47.02916pt, for example:
-(fancyhdr)                \setlength{\headheight}{47.02916pt}.
-(fancyhdr)                You might also make \topmargin smaller to compensate:
-
-(fancyhdr)                \addtolength{\topmargin}{-35.02916pt}.
-
-
-LaTeX Warning: File `INSA_graphic.png' not found on input line 226.
-
-
-! Package pdftex.def Error: File `INSA_graphic.png' not found: using draft sett
-ing.
-
-See the pdftex.def package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.226 \end{document}
-                    
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-
-Package fancyhdr Warning: \footskip is too small (30.0pt): 
-(fancyhdr)                Make it at least 47.02916pt, for example:
-(fancyhdr)                \setlength{\footskip}{47.02916pt}.
-
-[5]
-(Convention/conventions_generees/convention_230089401/convention_230089401.aux)
+[4] (Convention/conventions_generees/convention_0009204/convention_0009204.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 4252 strings out of 476182
- 68918 string characters out of 5795594
- 1931975 words of memory out of 5000000
- 26223 multiletter control sequences out of 15000+600000
- 568582 words of font info for 58 fonts, out of 8000000 for 9000
+ 4161 strings out of 476182
+ 66649 string characters out of 5795594
+ 1930975 words of memory out of 5000000
+ 26136 multiletter control sequences out of 15000+600000
+ 568269 words of font info for 57 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 57i,14n,65p,566b,481s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 57i,16n,65p,562b,393s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0800.
 600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1
 440.600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/t
 crm1200.600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
 ec/ecbx1200.600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecrm1200.600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfour/j
-knappen/ec/ecbx1728.600pk> </home/jkergosi/.texlive2023/texmf-var/fonts/pk/ljfo
-ur/jknappen/ec/ectt1200.600pk>
-Output written on Convention/conventions_generees/convention_230089401/conventi
-on_230089401.pdf (5 pages, 67777 bytes).
+knappen/ec/ecbx1728.600pk>
+Output written on Convention/conventions_generees/convention_0009204/convention
+_0009204.pdf (4 pages, 438139 bytes).
 PDF statistics:
- 237 PDF objects out of 1000 (max. 8388607)
- 40 compressed objects within 1 object stream
+ 219 PDF objects out of 1000 (max. 8388607)
+ 35 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
