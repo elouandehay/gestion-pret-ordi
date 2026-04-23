@@ -32,19 +32,22 @@
 <form action="{{ url_for('generation_convention') }}" method="post">
 
     <label for="nom">Nom de l'étudiant :</label>
-    <input type="text" id="nom" name="nom" required>
+    <input type="text" id="nom" name="nom" autocomplete="off" required>
+    <ul id="nom-results" class="dropdown"></ul>
 
     <label for="prenom">Prénom de l'étudiant :</label>
-    <input type="text" id="prenom" name="prenom" required>
+    <input type="text" id="prenom" name="prenom" autocomplete="off" required>
+    <ul id="prenom-results" class="dropdown"></ul> 
+ 
 
     <label for="observation">Observation lors de l'emprunt :</label>
-    <textarea id="observation" name="observation"></textarea>
-
-    <label for="signature">Signature :</label>
-    <textarea id="signature" name="signature" placeholder="Signer ici"></textarea>
+    <textarea id="observation" name="observation"></textarea> 
 
     <button type="submit">Valider</button>
 </form>
 
 <a href="{{ url_for('index') }}">Retour à l'accueil</a>
+
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>    <label for="observation">Observation lors de l'emprunt :</label>
+
 {% endblock %}

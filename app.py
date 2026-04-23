@@ -457,6 +457,11 @@ def ajouter_mail():
 
     return redirect(url_for("afficher_mails"))
 
+@app.route("/mail/cible", methods=["GET"])
+@login_required
+def cible_mail():
+    return render_template("cible.html")
+
 @app.route("/mail/supprimer/<int:id>")
 @login_required
 def supprimer_mail(id):
@@ -643,6 +648,40 @@ def upload_convention():
 
 # Génération de la convention pour un élève
 
+@app.route('/api/noms')
+@login_required
+def search_noms():
+    query = request.args.get('q', '').lower()
+
+    conn = get_db_connection()
+    rows = conn.execute("""
+        SELECT DISTINCT nom
+        FROM etudiants
+        WHERE LOWER(nom) LIKE ?
+        LIMIT 10
+    """, (f"%{query}%",)).fetchall()
+
+    return jsonify([r["nom"] for r in rows])
+
+@app.route('/api/prenoms')
+@login_required
+def search_prenoms():
+    nom = request.args.get('nom', '').lower()
+
+    conn = get_db_connection()
+
+    if not nom:
+        return jsonify([])
+
+    rows = conn.execute("""
+        SELECT DISTINCT prenom
+        FROM etudiants
+        WHERE LOWER(nom) LIKE ?
+        ORDER BY prenom
+    """, (f"%{nom}%",)).fetchall()
+
+    return jsonify([r["prenom"] for r in rows])
+
 @app.route('/convention/generation', methods=['GET', 'POST'])
 @login_required
 def generation_convention():
@@ -650,8 +689,7 @@ def generation_convention():
         nom = request.form.get('nom')
         prenom = request.form.get('prenom')
         observation = request.form.get('observation')
-        signature = request.form.get('signature')
-
+        
         # Vérification minimale
         if not nom or not prenom:
             flash("Nom et prénom sont obligatoires.")
