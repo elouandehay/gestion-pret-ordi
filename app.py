@@ -57,7 +57,7 @@ def historique(numero_serie):
     """, (numero_serie,)).fetchall()
 
     conn.close()
-    
+
     return render_template(
         'historique.html',
         historique=historique,
@@ -154,7 +154,7 @@ def index():
 
     ordinateurs = conn.execute("""
         SELECT o.numero_serie, o.numero_inventaire, o.modele, o.date_sortie, o.dispo,
-               e.nom, e.prenom,
+               e.id as etudiant_id, e.nom, e.prenom,
                p.caution_prof_validee, p.caution_compta_validee
         FROM ordinateurs o
         LEFT JOIN prets p ON o.numero_serie = p.ordinateur_id AND o.dispo = 0
@@ -185,6 +185,21 @@ def index():
         commentaires_dict[c['ordinateur_id']].append(c)
 
     return render_template('index.html', ordinateurs=ordinateurs, commentaires_dict=commentaires_dict, etudiants=etudiants, can_undo=can_undo, can_redo=can_redo)
+
+@app.route('/etudiant/<int:id>')
+@login_required
+def fiche_etudiant(id):
+    conn = get_db_connection()
+
+    etudiant = conn.execute("""
+        SELECT nom, prenom, email, ine, annee, boursier
+        FROM etudiants
+        WHERE id = ?
+    """, (id,)).fetchone()
+
+    conn.close()
+
+    return render_template('etudiant.html', etudiant=etudiant)
 
 @app.route('/search_etudiants')
 def search_etudiants():
@@ -333,7 +348,7 @@ def ajouter():
             conn.close()
             return redirect(url_for('index'))
     return render_template('ajouter.html')
-    
+
 
 @app.route('/ajouter_modele', methods=['GET', 'POST'])
 @login_required
@@ -441,8 +456,8 @@ def ajouter_mail():
     date_envoi = date_envoi.replace("T", " ") + ":00"
 
     mapping = {
-        "retard": 1, 
-        "boursiers": 2 
+        "retard": 1,
+        "boursiers": 2
     }
 
     cible_id = mapping[cible]
@@ -509,59 +524,59 @@ def modifier_mail(id):
 # Envoye des mails non-envoyes de la base
 
 # def envoyer_mails_programmes():
-# 
+#
 #     conn = sqlite3.connect("database.db")
 #     conn.row_factory = sqlite3.Row
 #     cur = conn.cursor()
-# 
+#
 #     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-# 
+#
 #     cur.execute("""
 #         SELECT * FROM mails
 #         WHERE envoye = 0 AND date_envoi <= ?
 #     """, (now,))
-# 
+#
 #     mails = cur.fetchall()
-# 
+#
 #     yag = yagmail.SMTP("tonmail@gmail.com", "mot_de_passe_app")
-# 
+#
 #     for mail in mails:
-# 
+#
 #         cible_id = mail["cible_id"]
-# 
+#
 #         # déterminer les destinataires
 #         if cible_id == 1:  # retard
 #             cur.execute("SELECT email FROM etudiants WHERE retard = 1")
-# 
+#
 #         elif cible_id == 2:  # tous
 #             cur.execute("SELECT email FROM etudiants")
-# 
+#
 #         elif cible_id == 3:  # boursiers
 #             cur.execute("SELECT email FROM etudiants WHERE boursier = 1")
-# 
+#
 #         emails = [row["email"] for row in cur.fetchall()]
-# 
+#
 #         if emails:
 #             yag.send(
 #                 to=emails,
 #                 subject=mail["objet"],
 #                 contents=mail["contenu"]
 #             )
-# 
+#
 #         # marquer comme envoyé
 #         cur.execute("""
 #             UPDATE mails
 #             SET envoye = 1
 #             WHERE id = ?
 #         """, (mail["id"],))
-# 
+#
 #     conn.commit()
 #     conn.close()
-# 
+#
 # scheduler = BackgroundScheduler()
 # scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
 # scheduler.start()
-# 
+#
 
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
@@ -598,7 +613,7 @@ def update_etudiants():
     if request.method == "POST":
         uploaded_files = request.files.getlist("files")
         # On prend jusqu'à 4 fichiers
-        
+
         file1 = uploaded_files[0] if len(uploaded_files) > 0 else None
         file2 = uploaded_files[1] if len(uploaded_files) > 1 else None
         file3 = uploaded_files[2] if len(uploaded_files) > 2 else None
@@ -718,7 +733,7 @@ def generation_convention():
         )
 
         conn.commit()
-        conn.close()        
+        conn.close()
 
         if etudiant is None:
             flash("Cet étudiant n'existe pas dans la base.")
@@ -741,9 +756,9 @@ def generation_convention():
         return redirect(url_for('index'))
 
     return render_template('convention_generation.html')
-        
 
-    
+
+
 @app.route('/valider-caution-prof/<numero_serie>', methods=['POST'])
 @login_required
 def valider_caution_prof(numero_serie):
@@ -913,7 +928,7 @@ def annuler_log(log_id):
 
 
 @app.route('/backups')
-@login_required 
+@login_required
 def backups():
     fichiers = sorted(
         [f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')],

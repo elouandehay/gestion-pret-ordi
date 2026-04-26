@@ -102,7 +102,13 @@
             {% if pc['dispo'] == 1 %}
             <span class="disponible">🟢 Disponible</span>
             {% elif pc['dispo'] == 0 %}
-            <span class="emprunte">🔴 Emprunté{% if pc['prenom'] and pc['nom'] %} par {{ pc['prenom'] }} {{ pc['nom'] }}{% endif %}</span>
+            <span class="emprunte">🔴 Emprunté
+                {% if pc['prenom'] and pc['nom'] %}
+                par
+                <a href="{{ url_for('fiche_etudiant', id=pc['etudiant_id']) }}">
+                    {{ pc['prenom'] }} {{ pc['nom'] }}
+                </a>
+            {% endif %}</span>
             {% elif pc['dispo'] == 2 %}
             <span style="color: orange;">🟠 En réparation</span>
             {% endif %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Fiche étudiant</h2>
+
+<p><strong>Nom :</strong> {{ etudiant.nom }}</p>
+<p><strong>Prénom :</strong> {{ etudiant.prenom }}</p>
+<p><strong>Email :</strong> {{ etudiant.email }}</p>
+<p><strong>INE :</strong> {{ etudiant.ine }}</p>
+<p><strong>Année :</strong> {{ etudiant.annee }}</p>
+<p><strong>Statut :</strong>
+    {% if etudiant.boursier == 1 %}
+        Boursier
+    {% else %}
+        Non boursier
+    {% endif %}
+</p>
+
+<a href="{{ url_for('index') }}">⬅ Retour</a>
+
+{% endblock %}
