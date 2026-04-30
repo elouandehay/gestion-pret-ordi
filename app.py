@@ -13,6 +13,11 @@ from Convention.generation_convention import generer_convention
 from flask import request, redirect, url_for, render_template, send_file
 from werkzeug.utils import secure_filename
 from update_etudiants import process_etudiants
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
 # import yagmail
 # from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -461,9 +466,10 @@ def ajouter_mail():
     contenu = request.form["contenu"]
     date_envoi = request.form["date_envoi"]
 
-    # conversion propre HTML -> SQLite
+    # format SQLite
     date_envoi = date_envoi.replace("T", " ") + ":00"
 
+    # cible mapping
     mapping = {
         "retard": 1,
         "boursiers": 2,
@@ -472,10 +478,37 @@ def ajouter_mail():
 
     cible_id = mapping[cible]
 
+    # email mode (radio button)
+    email_mode = int(request.form.get("email_mode", 3))  # 1 insa / 2 perso / 3 les deux
+
+    # années (checkbox → booléen 0/1)
+    annee3 = 1 if request.form.get("annee_1") else 0
+    annee4 = 1 if request.form.get("annee_2") else 0
+    annee5 = 1 if request.form.get("annee_3") else 0
+
     cur.execute("""
-        INSERT INTO mails (cible_id, objet, contenu, date_envoi, envoye)
-        VALUES (?, ?, ?, ?, 0)
-    """, (cible_id, objet, contenu, date_envoi))
+        INSERT INTO mails (
+            cible_id,
+            objet,
+            contenu,
+            date_envoi,
+            envoye,
+            email_mode,
+            annee3,
+            annee4,
+            annee5
+        )
+        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)
+    """, (
+        cible_id,
+        objet,
+        contenu,
+        date_envoi,
+        email_mode,
+        annee3,
+        annee4,
+        annee5
+    ))
 
     conn.commit()
     conn.close()
@@ -572,8 +605,6 @@ def config_cible():
 
     return render_template('config_cible.html', etudiants=etudiants)
 
-# Envoye des mails non-envoyes de la base
-
 # def envoyer_mails_programmes():
 #
 #     conn = sqlite3.connect("database.db")
@@ -589,7 +620,15 @@ def config_cible():
 #
 #     mails = cur.fetchall()
 #
-#     yag = yagmail.SMTP("tonmail@gmail.com", "mot_de_passe_app")
+#     # connexion SMTP (exemple Gmail)
+#     smtp_server = "smtp.gmail.com"
+#     smtp_port = 587
+#     smtp_user = "tonmail@gmail.com"
+#     smtp_password = "mot_de_passe_app"
+#
+#     server = smtplib.SMTP(smtp_server, smtp_port)
+#     server.starttls()
+#     server.login(smtp_user, smtp_password)
 #
 #     for mail in mails:
 #
@@ -608,11 +647,15 @@ def config_cible():
 #         emails = [row["email"] for row in cur.fetchall()]
 #
 #         if emails:
-#             yag.send(
-#                 to=emails,
-#                 subject=mail["objet"],
-#                 contents=mail["contenu"]
-#             )
+#
+#             msg = MIMEMultipart()
+#             msg["From"] = smtp_user
+#             msg["Subject"] = mail["objet"]
+#             msg.attach(MIMEText(mail["contenu"], "plain"))
+#
+#             for email in emails:
+#                 msg["To"] = email
+#                 server.sendmail(smtp_user, email, msg.as_string())
 #
 #         # marquer comme envoyé
 #         cur.execute("""
@@ -624,10 +667,11 @@ def config_cible():
 #     conn.commit()
 #     conn.close()
 #
+#     server.quit()
+#
 # scheduler = BackgroundScheduler()
 # scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
 # scheduler.start()
-#
 
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
