@@ -56,7 +56,7 @@
 <h3>Programmer un mail</h3>
 
 <form action="{{ url_for('cible_mail') }}" method="get">
-    <button type="submit">Configuration des cibles</button>
+    <button type="submit">Configuration d'une cible</button>
 </form>
 
 <form action="{{ url_for('ajouter_mail') }}" method="post">
@@ -66,6 +66,44 @@
     <option value="retard">Étudiants n'ayant pas rendu le matériel</option>
     <option value="boursiers">Étudiants boursiers</option>
 </select>
+
+<label>Type d'adresse email :</label>
+
+<div style="display: flex; gap: 15px; margin-top: 5px;">
+    <label>
+        <input type="radio" name="email_mode" value="1" checked>
+        Email INSA
+    </label>
+
+    <label>
+        <input type="radio" name="email_mode" value="2">
+        Email personnel
+    </label>
+
+    <label>
+        <input type="radio" name="email_mode" value="3">
+        Les deux
+    </label>
+</div>
+
+<label>Années concernées :</label>
+
+<div style="display: flex; gap: 15px; margin-top: 5px;">
+    <label>
+        <input type="checkbox" name="annee_1" checked>
+        3ème année
+    </label>
+
+    <label>
+        <input type="checkbox" name="annee_2" checked>
+        4ème année
+    </label>
+
+    <label>
+        <input type="checkbox" name="annee_3" checked>
+        5ème année
+    </label>
+</div>
 
 <label for="objet">Objet du mail :</label>
 <input type="text" id="objet" name="objet" required>
