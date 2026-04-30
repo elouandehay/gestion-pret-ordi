@@ -55,9 +55,9 @@
 
 <h3>Programmer un mail</h3>
 
-<form action="{{ url_for('cible_mail') }}" method="get">
-    <button type="submit">Configuration d'une cible</button>
-</form>
+<a href="{{ url_for('config_cible') }}" style="text-decoration: none;">
+    <button type="button">Configuration d'une cible</button>
+</a>
 
 <form action="{{ url_for('ajouter_mail') }}" method="post">
 
@@ -65,6 +65,7 @@
 <select id="cible" name="cible" required>
     <option value="retard">Étudiants n'ayant pas rendu le matériel</option>
     <option value="boursiers">Étudiants boursiers</option>
+    <option value="tous">Tous les étudiants</option>
 </select>
 
 <label>Type d'adresse email :</label>

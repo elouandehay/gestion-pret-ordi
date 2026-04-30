@@ -466,7 +466,8 @@ def ajouter_mail():
 
     mapping = {
         "retard": 1,
-        "boursiers": 2
+        "boursiers": 2,
+        "tous": 3
     }
 
     cible_id = mapping[cible]
@@ -529,6 +530,47 @@ def modifier_mail(id):
     conn.close()
 
     return render_template("modifier_mail.html", mail=mail)
+
+@app.route('/mail/cible/config', methods=['GET', 'POST'])
+@login_required
+def config_cible():
+    conn = get_db_connection()
+
+    if request.method == 'POST':
+        nom_cible = request.form.get('nom_cible')
+
+        # IDs des étudiants sélectionnés
+        etudiants_ids = request.form.getlist('etudiants')
+
+        # 1) création de la cible
+        cur = conn.execute(
+            "INSERT INTO cibles_mails (nom, description) VALUES (?, ?)",
+            (nom_cible, "")
+        )
+        cible_id = cur.lastrowid
+
+        # 2) liaison étudiants ↔ cible
+        for etu_id in etudiants_ids:
+            conn.execute(
+                "INSERT INTO cible_etudiants (cible_id, etudiant_id) VALUES (?, ?)",
+                (cible_id, etu_id)
+            )
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('afficher_mails'))
+
+    # GET → affichage de la page
+    etudiants = conn.execute("""
+        SELECT id, nom, prenom, email, email_insa
+        FROM etudiants
+        ORDER BY nom, prenom
+    """).fetchall()
+
+    conn.close()
+
+    return render_template('config_cible.html', etudiants=etudiants)
 
 # Envoye des mails non-envoyes de la base
 

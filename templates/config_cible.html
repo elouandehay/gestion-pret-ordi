@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Configuration d'une cible mail</h2>
+
+<style>
+    form label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    input {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border: 1px solid #ccc;
+        max-height: 150px;
+        overflow-y: auto;
+        background: white;
+        position: absolute;
+        width: 100%;
+        z-index: 10;
+    }
+
+    ul li {
+        padding: 6px;
+        cursor: pointer;
+    }
+
+    ul li:hover {
+        background: #eee;
+    }
+
+    .field {
+        position: relative;
+        margin-bottom: 15px;
+    }
+
+    table {
+        margin-top: 30px;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table th, table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+    }
+
+    table th {
+        background: #f2f2f2;
+    }
+
+    .btn {
+        margin-top: 20px;
+        padding: 10px;
+    }
+</style>
+
+<h3>Créer une nouvelle cible</h3>
+
+<form method="post">
+
+    <label>Nom de la cible :</label>
+    <input type="text" name="nom_cible" required>
+
+    <h3>Ajouter des étudiants</h3>
+
+    <div class="field">
+        <label>Nom :</label>
+        <input type="text" id="nom" autocomplete="off">
+        <ul id="nom-results"></ul>
+    </div>
+
+    <div class="field">
+        <label>Prénom :</label>
+        <input type="text" id="prenom" autocomplete="off">
+        <ul id="prenom-results"></ul>
+    </div>
+
+    <button type="button" class="btn" onclick="ajouterEtudiant()">Ajouter</button>
+
+    <h3>Liste des étudiants sélectionnés</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Email INSA</th>
+                <th>Email perso</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody id="liste-etudiants"></tbody>
+    </table>
+
+    <button type="submit" class="btn">Créer la cible</button>
+
+</form>
+
+<!-- JS externe uniquement -->
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
+
+{% endblock %}
