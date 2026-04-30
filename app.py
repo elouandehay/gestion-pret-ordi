@@ -223,67 +223,6 @@ def search_etudiants():
     return jsonify([dict(e) for e in etudiants])
 
 
-@app.route('/emprunter/<path:numero_serie>', methods=('POST',))
-@login_required
-def emprunter(numero_serie):
-    eleve = request.form['eleve'].strip()
-
-    if not eleve:
-        flash("Veuillez saisir le nom de l'élève.")
-        return redirect(url_for('index'))
-
-    # Séparer le nom et le prénom si possible
-    parts = eleve.split(' ', 1)
-    nom = parts[0].strip()
-    prenom = parts[1].strip() if len(parts) > 1 else ""
-
-    conn = get_db_connection()
-    # Chercher l'étudiant existant
-    etudiant = conn.execute(
-        "SELECT id, boursier FROM etudiants WHERE nom = ? AND prenom = ?",
-        (nom, prenom)
-    ).fetchone()
-
-    if etudiant is None:
-        flash("Cet étudiant n'existe pas dans la base. Impossible de lui prêter un ordinateur.")
-        conn.close()
-        return redirect(url_for('index'))
-
-    etudiant_id = etudiant['id']
-
-    # Vérifier si l'étudiant a déjà un prêt en cours
-    pret_en_cours = conn.execute(
-        "SELECT COUNT(*) as nb FROM prets WHERE etudiant_id = ?",
-        (etudiant_id,)
-    ).fetchone()['nb']
-
-    if pret_en_cours > 0:
-        flash("Cet étudiant a déjà un ordinateur en prêt.")
-        conn.close()
-        return redirect(url_for('index'))
-
-    # Déterminer les cautions selon le statut boursier
-    if etudiant['boursier'] == 1:
-        caution_prof_validee = 1
-        caution_compta_validee = 1
-    else:
-        caution_prof_validee = 0
-        caution_compta_validee = 0
-
-    # Créer le prêt
-    conn.execute("""
-        INSERT INTO prets (etudiant_id, ordinateur_id, caution_prof_validee, caution_compta_validee)
-        VALUES (?, ?, ?, ?)
-    """, (etudiant_id, numero_serie, caution_prof_validee, caution_compta_validee))
-
-    # Marquer l'ordinateur comme emprunté
-    conn.execute('UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?', (numero_serie,))
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('index'))
-
-
 @app.route('/rendre/<path:numero_serie>', methods=('GET', 'POST'))
 @login_required
 def rendre(numero_serie):
