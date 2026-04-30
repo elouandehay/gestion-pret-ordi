@@ -71,6 +71,7 @@
         <th>Caution</th>
         <th>Commentaires</th>
         <th>Historique</th>
+        <th>Convention</th>
     </tr>
     {# Ligne de filtres (ton ami) #}
     <tr id="filterRow">
@@ -87,6 +88,7 @@
                 <option value="compta">Caution validée Comptable</option>
             </select>
         </th>
+        <th></th>
         <th></th>
         <th></th>
     </tr>
@@ -193,6 +195,15 @@
             <a href="{{ url_for('historique', numero_serie=pc['numero_serie']) }}">
                 <button type="button">Historique de prêt</button>
             </a>
+        </td>
+        <td>
+            {% if pc['dispo'] == 0 %}
+                <a href="{{ url_for('telecharger_convention_pret', ine=etudiants['ine']) }}">
+                    <button type="button">Télécharger convention</button>
+                </a>
+            {% else %}
+                <span style="color: grey;">Pas de convention</span>
+            {% endif %}
         </td>
     </tr>
     {% endfor %}

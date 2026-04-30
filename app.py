@@ -390,7 +390,12 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
-
+@app.route('/telecharger_convention/<ine>')
+def telecharger_convention_pret(ine):
+    # logique pour récupérer le fichier
+    # exemple :
+    path = f"convention_{ine}.pdf"
+    return send_file(path, as_attachment=True)
 
 # Programmation de l'envoye de mails
 
