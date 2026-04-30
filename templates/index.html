@@ -197,13 +197,13 @@
             </a>
         </td>
         <td>
-            {% if pc['dispo'] == 0 %}
-                <a href="{{ url_for('telecharger_convention_pret', ine=etudiants['ine']) }}">
-                    <button type="button">Télécharger convention</button>
-                </a>
-            {% else %}
-                <span style="color: grey;">Pas de convention</span>
-            {% endif %}
+          {% if pc['dispo'] == 0 and pc['pret_id'] %}
+              <a href="{{ url_for('telecharger_convention_pret', pret_id=pc['pret_id']) }}">
+                  <button type="button">Télécharger convention</button>
+              </a>
+          {% else %}
+              <span style="color: grey;">Pas de convention</span>
+          {% endif %}
         </td>
     </tr>
     {% endfor %}

@@ -154,13 +154,14 @@ def index():
 
     ordinateurs = conn.execute("""
         SELECT o.numero_serie, o.numero_inventaire, o.modele, o.date_sortie, o.dispo,
-               e.id as etudiant_id, e.nom, e.prenom,
-               p.caution_prof_validee, p.caution_compta_validee
+            e.id as etudiant_id, e.nom, e.prenom,
+            p.id as pret_id,
+            p.caution_prof_validee, p.caution_compta_validee
         FROM ordinateurs o
-        LEFT JOIN prets p ON o.numero_serie = p.ordinateur_id AND o.dispo = 0
+        LEFT JOIN prets p ON o.numero_serie = p.ordinateur_id
         LEFT JOIN etudiants e ON p.etudiant_id = e.id
         ORDER BY o.date_sortie ASC
-    """).fetchall()
+        """).fetchall()
 
     commentaires = conn.execute("""
         SELECT ordinateur_id, commentaire, date_commentaire
@@ -390,11 +391,14 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
-@app.route('/telecharger_convention/<ine>')
-def telecharger_convention_pret(ine):
-    # logique pour récupérer le fichier
-    # exemple :
-    path = f"convention_{ine}.pdf"
+@app.route('/telecharger_convention/<int:pret_id>')
+def telecharger_convention_pret(pret_id):
+
+    path = f"Convention/conventions_generees/convention_{pret_id}/convention_{pret_id}.pdf"
+
+    if not os.path.exists(path):
+        return "Fichier introuvable", 404
+
     return send_file(path, as_attachment=True)
 
 # Programmation de l'envoye de mails
@@ -732,6 +736,16 @@ def generation_convention():
         numero_inventaire = ordinateur["numero_inventaire"]
         numero_serie = ordinateur["numero_serie"]
 
+        # Insertion du pret
+        cursor = conn.execute("""
+            INSERT INTO prets (etudiant_id, ordinateur_id)
+            VALUES (?, ?)
+        """, (etudiant["id"], numero_serie))
+
+        # Récupération de l'id du prêt créé
+        pret_id = cursor.lastrowid
+
+        # Mettre l'ordi dans l'état emprunter
         conn.execute(
             "UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?",
             (numero_serie,)
@@ -755,7 +769,8 @@ def generation_convention():
             observation,
             modele,
             numero_inventaire,
-            numero_serie
+            numero_serie,
+            pret_id
         )
 
         return redirect(url_for('index'))
