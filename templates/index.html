@@ -116,18 +116,12 @@
             {% endif %}
         </td>
         <td style="display: flex; gap: 5px; flex-wrap: wrap;">
-            {% if pc['dispo'] == 1 %}
-            <form action="{{ url_for('emprunter', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
-                <input type="text" class="eleve-input" name="eleve" placeholder="Tapez un nom..." autocomplete="off" required>
-                <button type="submit">Prêter</button>
-            </form>
-            {% elif pc['dispo'] == 0 %}
+            {% if pc['dispo'] == 0 %}
             <form action="{{ url_for('rendre', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
                 <input type="text" name="commentaire" placeholder="État du PC" required>
                 <button type="submit">Marquer comme rendu</button>
             </form>
             {% endif %}
-
             {% if pc['dispo'] == 1 %}
             <form action="{{ url_for('supprimer', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet ordinateur ?');">
                 <button type="submit">Supprimer l'ordi de la base</button>
@@ -135,7 +129,6 @@
             {% else %}
             <span style="color: grey;">Suppression impossible prêt en cours</span>
             {% endif %}
-
             {% if pc['dispo'] == 1 %}
             <form action="{{ url_for('envoyer_reparation', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
                 <button type="submit">Envoyer en réparation</button>

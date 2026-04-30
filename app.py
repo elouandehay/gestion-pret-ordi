@@ -635,8 +635,13 @@ def config_cible():
 #         cible_id = mail["cible_id"]
 #
 #         # déterminer les destinataires
-#         if cible_id == 1:  # retard
-#             cur.execute("SELECT email FROM etudiants WHERE retard = 1")
+#
+#         if cible_id == 1:  # retard (étudiants ayant un prêt actif)
+#             cur.execute("""
+#                 SELECT DISTINCT e.email
+#                 FROM etudiants e
+#                 JOIN prets p ON e.id = p.etudiant_id
+#             """)
 #
 #         elif cible_id == 2:  # tous
 #             cur.execute("SELECT email FROM etudiants")
@@ -672,6 +677,7 @@ def config_cible():
 # scheduler = BackgroundScheduler()
 # scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
 # scheduler.start()
+
 
 @app.route('/supprimer/<path:numero_serie>', methods=['POST'])
 @login_required
