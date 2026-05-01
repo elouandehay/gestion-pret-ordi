@@ -19,6 +19,9 @@ from email.mime.multipart import MIMEMultipart
 
 # from apscheduler.schedulers.background import BackgroundScheduler
 
+DOSSIER_JSON = "cibles_etudiants"
+FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
+
 app = Flask(__name__)
 app.secret_key = '3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
 
@@ -444,45 +447,60 @@ def afficher_mails():
 
     mails_envoyes = [dict(r) for r in rows]
 
+    cibles = conn.execute("""
+        SELECT id, cible, description
+        FROM cibles_mails
+        ORDER BY id
+    """).fetchall()
+
     conn.close()
 
     return render_template(
         "mail.html",
         mails_programmes=mails_programmes,
-        mails_envoyes=mails_envoyes
+        mails_envoyes=mails_envoyes,
+        cibles=cibles
     )
+
+def load_cible_ines(cible_id):
+    path = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
+
+    if not os.path.exists(path):
+        return []
+
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        return []
+
+    return data.get("ines", [])
+
 
 @app.route("/mail/ajouter", methods=["POST"])
 @login_required
 def ajouter_mail():
 
     conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    cible = request.form["cible"]
+    cible_id = int(request.form["cible"])
     objet = request.form["objet"]
     contenu = request.form["contenu"]
-    date_envoi = request.form["date_envoi"]
+    date_envoi = request.form["date_envoi"].replace("T", " ") + ":00"
 
-    # format SQLite
-    date_envoi = date_envoi.replace("T", " ") + ":00"
+    email_mode = int(request.form.get("email_mode", 3))
 
-    # cible mapping
-    mapping = {
-        "retard": 1,
-        "boursiers": 2,
-        "tous": 3
-    }
-
-    cible_id = mapping[cible]
-
-    # email mode (radio button)
-    email_mode = int(request.form.get("email_mode", 3))  # 1 insa / 2 perso / 3 les deux
-
-    # années (checkbox → booléen 0/1)
     annee3 = 1 if request.form.get("annee_1") else 0
     annee4 = 1 if request.form.get("annee_2") else 0
     annee5 = 1 if request.form.get("annee_3") else 0
+
+    # 🔥 charge les INE depuis JSON cible dynamique
+    ines = load_cible_ines(cible_id)
+
+    # optionnel : on peut les utiliser pour audit/log ou futur traitement
+    # print(ines)
 
     cur.execute("""
         INSERT INTO mails (
@@ -561,10 +579,6 @@ def modifier_mail(id):
 @login_required
 def cible_mail():
     return render_template("cible.html")
-
-
-DOSSIER_JSON = "cibles_etudiants"
-FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
 
 def load_json_safe(path):
     if not os.path.exists(path):
@@ -751,12 +765,25 @@ def supprimer(numero_serie):
 
 # Update de la table des étudiants à partir des nouveaux .csv
 
+def write_json(path, ines):
+    with open(path, "w") as f:
+        json.dump({"ines": ines}, f)
+
+def flush_json_folder(folder):
+    if not os.path.exists(folder):
+        return
+
+    for file in os.listdir(folder):
+        if file.endswith(".json"):
+            os.remove(os.path.join(folder, file))
+
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
 def update_etudiants():
+
     if request.method == "POST":
+
         uploaded_files = request.files.getlist("files")
-        # On prend jusqu'à 4 fichiers
 
         file1 = uploaded_files[0] if len(uploaded_files) > 0 else None
         file2 = uploaded_files[1] if len(uploaded_files) > 1 else None
@@ -765,8 +792,51 @@ def update_etudiants():
 
         process_etudiants(file1, file2, file3, file4)
 
-        flash("Les étudiants ont été mis à jour avec succès.")
+        flush_json_folder(DOSSIER_JSON)
+        os.makedirs(DOSSIER_JSON, exist_ok=True)
 
+        conn = sqlite3.connect("database.db")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        os.makedirs(DOSSIER_JSON, exist_ok=True)
+
+        # -----------------------
+        # CIBLE 3 : TOUS LES ETUDIANTS
+        # -----------------------
+        all_ines = [
+            row["ine"] for row in cur.execute(
+                "SELECT ine FROM etudiants WHERE ine IS NOT NULL"
+            ).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_3.json"), all_ines)
+
+        # -----------------------
+        # CIBLE 2 : BOURSIERS
+        # -----------------------
+        boursiers_ines = [
+            row["ine"] for row in cur.execute(
+                "SELECT ine FROM etudiants WHERE LOWER(boursier) = 'oui' AND ine IS NOT NULL"
+            ).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_2.json"), boursiers_ines)
+
+        # -----------------------
+        # CIBLE 1 : PRETS ACTIFS
+        # -----------------------
+        prets_ines = [
+            row["ine"] for row in cur.execute("""
+                SELECT e.ine
+                FROM etudiants e
+                JOIN prets p ON p.etudiant_id = e.id
+                WHERE e.ine IS NOT NULL
+            """).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_1.json"), prets_ines)
+
+        conn.close()
+
+        flash("Les étudiants ont été mis à jour avec succès.")
         return redirect(url_for("index"))
 
     return render_template("update_etudiants.html")
