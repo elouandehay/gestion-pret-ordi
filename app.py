@@ -16,8 +16,8 @@ from update_etudiants import process_etudiants
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-# from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 DOSSIER_JSON = "cibles_etudiants"
 FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
@@ -662,106 +662,125 @@ def config_cible():
 
     return render_template("config_cible.html", etudiants=etudiants)
 
-# def envoyer_mails_programmes():
-#
-#     conn = sqlite3.connect("database.db")
-#     conn.row_factory = sqlite3.Row
-#     cur = conn.cursor()
-#
-#     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-#
-#     cur.execute("""
-#         SELECT * FROM mails
-#         WHERE envoye = 0 AND date_envoi <= ?
-#     """, (now,))
-#
-#     mails = cur.fetchall()
-#
-#     # connexion SMTP (exemple Gmail)
-#     smtp_server = "smtp.gmail.com"
-#     smtp_port = 587
-#     smtp_user = "tonmail@gmail.com"
-#     smtp_password = "mot_de_passe_app"
-#
-#     server = smtplib.SMTP(smtp_server, smtp_port)
-#     server.starttls()
-#     server.login(smtp_user, smtp_password)
-#
-#     for mail in mails:
-#
-#         cible_id = mail["cible_id"]
-#
-#         # déterminer les destinataires
-#
-#         if cible_id == 1:  # retard (étudiants ayant un prêt actif)
-#             cur.execute("""
-#                 SELECT DISTINCT e.email
-#                 FROM etudiants e
-#                 JOIN prets p ON e.id = p.etudiant_id
-#             """)
-#
-#         elif cible_id == 2:  # tous
-#             cur.execute("SELECT email FROM etudiants")
-#
-#         elif cible_id == 3:  # boursiers
-#             cur.execute("SELECT email FROM etudiants WHERE boursier = 1")
-#
-#         emails = [row["email"] for row in cur.fetchall()]
-#
-#         if emails:
-#
-#             msg = MIMEMultipart()
-#             msg["From"] = smtp_user
-#             msg["Subject"] = mail["objet"]
-#             msg.attach(MIMEText(mail["contenu"], "plain"))
-#
-#             for email in emails:
-#                 msg["To"] = email
-#                 server.sendmail(smtp_user, email, msg.as_string())
-#
-#         # marquer comme envoyé
-#         cur.execute("""
-#             UPDATE mails
-#             SET envoye = 1
-#             WHERE id = ?
-#         """, (mail["id"],))
-#
-#     conn.commit()
-#     conn.close()
-#
-#     server.quit()
-#
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
-# scheduler.start()
+def load_ines(cible_id):
+    path = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
+
+    if not os.path.exists(path):
+        return []
+
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        return []
+
+    return data.get("ines", [])
 
 
-@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
-@login_required
-def supprimer(numero_serie):
-    conn = get_db_connection()
+def envoyer_mails_programmes():
 
-    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
-    if pret:
-        conn.close()
-        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
 
-    ordi = conn.execute("SELECT * FROM ordinateurs WHERE numero_serie = ?", (numero_serie,)).fetchone()
-    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    action = {
-        'type': 'supprimer',
-        'numero_serie': numero_serie,
-        'numero_inventaire': ordi['numero_inventaire'],
-        'modele': ordi['modele'],
-        'date_sortie': ordi['date_sortie'],
-    }
-    push_undo(action)
-    write_log(conn, f"Suppression de l'ordinateur {numero_serie} ({ordi['modele']})", action)
+    cur.execute("""
+        SELECT * FROM mails
+        WHERE envoye = 0 AND date_envoi <= ?
+    """, (now,))
+
+    mails = cur.fetchall()
+
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    smtp_user = "tonmail@gmail.com"
+    smtp_password = "mot_de_passe_app"
+
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(smtp_user, smtp_password)
+
+    for mail in mails:
+
+        cible_id = mail["cible_id"]
+        ines = load_ines(cible_id)
+
+        if not ines:
+            continue
+
+        placeholders = ",".join(["?"] * len(ines))
+
+        query = f"""
+            SELECT *
+            FROM etudiants
+            WHERE ine IN ({placeholders})
+        """
+
+        etudiants = cur.execute(query, ines).fetchall()
+
+        emails = []
+
+        for e in etudiants:
+
+            # ---------------- EMAIL MODE ----------------
+            if mail["email_mode"] == 1:
+                if e["email_insa"]:
+                    emails.append(e["email_insa"])
+
+            elif mail["email_mode"] == 2:
+                emails.append(e["email"])
+
+            else:
+                if e["email_insa"]:
+                    emails.append(e["email_insa"])
+                emails.append(e["email"])
+
+        # ---------------- ANNEES FILTER ----------------
+        filtered_emails = []
+
+        for e, email in zip(etudiants, emails):
+
+            ok = (
+                (mail["annee3"] and e["annee"] == 3) or
+                (mail["annee4"] and e["annee"] == 4) or
+                (mail["annee5"] and e["annee"] == 5)
+            )
+
+            if ok:
+                filtered_emails.append(email)
+
+        # ---------------- ENVOI ----------------
+
+        if filtered_emails:
+
+            msg = MIMEMultipart()
+            msg["From"] = smtp_user
+            msg["Subject"] = mail["objet"]
+            msg.attach(MIMEText(mail["contenu"], "plain"))
+
+            for email in filtered_emails:
+                server.sendmail(smtp_user, email, msg.as_string())
+
+        # marquer comme envoyé
+        cur.execute("""
+            UPDATE mails
+            SET envoye = 1
+            WHERE id = ?
+        """, (mail["id"],))
 
     conn.commit()
     conn.close()
-    return redirect(url_for('index'))
+    server.quit()
+
+scheduler = BackgroundScheduler()
+
+def start_scheduler():
+    if os.environ.get("WERZEUG_RUN_MAIN") == "true":
+        if not scheduler.running:
+            scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
+            scheduler.start()
+            atexit.register(lambda: scheduler.shutdown())
 
 # Update de la table des étudiants à partir des nouveaux .csv
 
@@ -1011,6 +1030,33 @@ def valider_caution_compta(numero_serie):
     action = {'type': 'valider_caution_compta', 'numero_serie': numero_serie}
     push_undo(action)
     write_log(conn, f"Validation caution comptable pour {numero_serie}", action)
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
+@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
+@login_required
+def supprimer(numero_serie):
+    conn = get_db_connection()
+
+    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
+    if pret:
+        conn.close()
+        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
+
+    ordi = conn.execute("SELECT * FROM ordinateurs WHERE numero_serie = ?", (numero_serie,)).fetchone()
+    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
+
+    action = {
+        'type': 'supprimer',
+        'numero_serie': numero_serie,
+        'numero_inventaire': ordi['numero_inventaire'],
+        'modele': ordi['modele'],
+        'date_sortie': ordi['date_sortie'],
+    }
+    push_undo(action)
+    write_log(conn, f"Suppression de l'ordinateur {numero_serie} ({ordi['modele']})", action)
 
     conn.commit()
     conn.close()
@@ -1285,4 +1331,5 @@ def _appliquer_redo(conn, action):
 
 
 if __name__ == '__main__':
+    start_scheduler()
     app.run(debug=True, ssl_context='adhoc')
