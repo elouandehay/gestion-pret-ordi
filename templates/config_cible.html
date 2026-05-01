@@ -17,33 +17,6 @@
         margin-top: 5px;
     }
 
-    ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        border: 1px solid #ccc;
-        max-height: 150px;
-        overflow-y: auto;
-        background: white;
-        position: absolute;
-        width: 100%;
-        z-index: 10;
-    }
-
-    ul li {
-        padding: 6px;
-        cursor: pointer;
-    }
-
-    ul li:hover {
-        background: #eee;
-    }
-
-    .field {
-        position: relative;
-        margin-bottom: 15px;
-    }
-
     table {
         margin-top: 30px;
         width: 100%;
@@ -60,35 +33,59 @@
     }
 
     .btn {
-        margin-top: 20px;
+        margin-top: 15px;
         padding: 10px;
+    }
+
+    .section {
+        margin-bottom: 40px;
     }
 </style>
 
-<h3>Créer une nouvelle cible</h3>
+<div class="section">
 
-<form method="post">
+    <h3>Créer une nouvelle cible</h3>
 
-    <label>Nom de la cible :</label>
-    <input type="text" name="nom_cible" required>
+    <form method="post">
+        <label>Nom de la cible :</label>
+        <input type="text" name="nom_cible" required>
 
-    <h3>Ajouter des étudiants</h3>
+        <label>Description de la cible :</label>
+        <input type="text" name="description_cible" required>
 
-    <div class="field">
+        <button type="submit" name="creer_cible" class="btn">Créer la cible</button>
+    </form>
+
+</div>
+
+<hr>
+
+<div class="section">
+
+    <h3>Ajouter un étudiant (Nom + Prénom)</h3>
+
+    <form method="post">
+
         <label>Nom :</label>
-        <input type="text" id="nom" autocomplete="off">
+        <input type="text" id="nom" name="nom" autocomplete="off" required>
         <ul id="nom-results"></ul>
-    </div>
 
-    <div class="field">
         <label>Prénom :</label>
-        <input type="text" id="prenom" autocomplete="off">
+        <input type="text" id="prenom" name="prenom" autocomplete="off" required>
         <ul id="prenom-results"></ul>
-    </div>
 
-    <button type="button" class="btn" onclick="ajouterEtudiant()">Ajouter</button>
+        <button type="submit" name="ajouter_ine" class="btn">
+            Ajouter l'étudiant
+        </button>
 
-    <h3>Liste des étudiants sélectionnés</h3>
+    </form>
+
+</div>
+<hr>
+
+<div class="section">
+
+    <h3>Étudiants sélectionnés</h3>
 
     <table>
         <thead>
@@ -97,18 +94,27 @@
                 <th>Prénom</th>
                 <th>Email INSA</th>
                 <th>Email perso</th>
-                <th>Action</th>
             </tr>
         </thead>
 
-        <tbody id="liste-etudiants"></tbody>
+        <tbody>
+            {% for etu in etudiants %}
+            <tr>
+                <td>{{ etu.nom }}</td>
+                <td>{{ etu.prenom }}</td>
+                <td>{{ etu.email_insa or '-' }}</td>
+                <td>{{ etu.email or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">Aucun étudiant sélectionné</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 
-    <button type="submit" class="btn">Créer la cible</button>
+</div>
 
-</form>
-
-<!-- JS externe uniquement -->
-<script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
+<script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
 
 {% endblock %}

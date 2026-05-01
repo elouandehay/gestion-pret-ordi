@@ -17,8 +17,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-
-# import yagmail
 # from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
@@ -515,11 +513,6 @@ def ajouter_mail():
 
     return redirect(url_for("afficher_mails"))
 
-@app.route("/mail/cible", methods=["GET"])
-@login_required
-def cible_mail():
-    return render_template("cible.html")
-
 @app.route("/mail/supprimer/<int:id>")
 @login_required
 def supprimer_mail(id):
@@ -564,46 +557,96 @@ def modifier_mail(id):
 
     return render_template("modifier_mail.html", mail=mail)
 
+@app.route("/mail/cible", methods=["GET"])
+@login_required
+def cible_mail():
+    return render_template("cible.html")
+
+
+DOSSIER_JSON = "cibles_etudiants"
+FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
+
+def load_json_safe(path):
+    if not os.path.exists(path):
+        return {"ines": []}
+    if os.path.getsize(path) == 0:
+        return {"ines": []}
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        return {"ines": []}
+    if "ines" not in data:
+        data["ines"] = []
+    return data
+
+
 @app.route('/mail/cible/config', methods=['GET', 'POST'])
 @login_required
 def config_cible():
     conn = get_db_connection()
+    os.makedirs(DOSSIER_JSON, exist_ok=True)
+
+    data = load_json_safe(FICHIER_COURANT)
 
     if request.method == 'POST':
-        nom_cible = request.form.get('nom_cible')
 
-        # IDs des étudiants sélectionnés
-        etudiants_ids = request.form.getlist('etudiants')
+        if "ajouter_ine" in request.form:
+            nom = request.form.get("nom")
+            prenom = request.form.get("prenom")
 
-        # 1) création de la cible
-        cur = conn.execute(
-            "INSERT INTO cibles_mails (nom, description) VALUES (?, ?)",
-            (nom_cible, "")
-        )
-        cible_id = cur.lastrowid
+            if nom and prenom:
+                row = conn.execute(
+                    "SELECT ine FROM etudiants WHERE nom = ? AND prenom = ?",
+                    (nom, prenom)
+                ).fetchone()
 
-        # 2) liaison étudiants ↔ cible
-        for etu_id in etudiants_ids:
-            conn.execute(
-                "INSERT INTO cible_etudiants (cible_id, etudiant_id) VALUES (?, ?)",
-                (cible_id, etu_id)
+                if row:
+                    ine = row["ine"]
+
+                    if ine and ine not in data["ines"]:
+                        data["ines"].append(ine)
+
+                    with open(FICHIER_COURANT, "w") as f:
+                        json.dump(data, f)
+
+            return redirect(url_for('config_cible'))
+
+        if "creer_cible" in request.form:
+            nom_cible = request.form.get('nom_cible')
+            description_cible = request.form.get('description_cible')
+
+            cur = conn.execute(
+                "INSERT INTO cibles_mails (cible, description) VALUES (?, ?)",
+                (nom_cible, description_cible)
             )
+            cible_id = cur.lastrowid
 
-        conn.commit()
-        conn.close()
+            fichier_final = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
+            with open(fichier_final, "w") as f:
+                json.dump(data, f)
 
-        return redirect(url_for('afficher_mails'))
+            with open(FICHIER_COURANT, "w") as f:
+                json.dump({"ines": []}, f)
 
-    # GET → affichage de la page
-    etudiants = conn.execute("""
-        SELECT id, nom, prenom, email, email_insa
-        FROM etudiants
-        ORDER BY nom, prenom
-    """).fetchall()
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('afficher_mails'))
+
+    etudiants = []
+    if data.get("ines"):
+        placeholders = ",".join(["?"] * len(data["ines"]))
+        query = f"""
+            SELECT nom, prenom, email, email_insa, ine
+            FROM etudiants
+            WHERE ine IN ({placeholders})
+        """
+        etudiants = conn.execute(query, data["ines"]).fetchall()
 
     conn.close()
 
-    return render_template('config_cible.html', etudiants=etudiants)
+    return render_template("config_cible.html", etudiants=etudiants)
 
 # def envoyer_mails_programmes():
 #
