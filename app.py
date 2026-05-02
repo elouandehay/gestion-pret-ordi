@@ -676,7 +676,24 @@ def load_ines(cible_id):
 
     return data.get("ines", [])
 
+# ---------------- LOGGING ----------------
+logging.basicConfig(level=logging.INFO)
 
+# ---------------- BREVO CONFIG ----------------
+SMTP_SERVER = "smtp-relay.brevo.com"
+SMTP_PORT = 587
+SMTP_USER = "a9f8bd001@smtp-brevo.com"
+SMTP_PASSWORD = "5g1DOLEUS3ZcmTJI"
+
+FROM_EMAIL = "julian.kergosien@insa-rennes.fr"
+
+# ---------------- SCHEDULER CONFIG ----------------
+HEURE_CIBLE = datetime.now().strftime("%H:%M")
+
+scheduler = BackgroundScheduler()
+
+
+# ---------------- CORE MAIL FUNCTION ----------------
 def envoyer_mails_programmes():
 
     conn = sqlite3.connect("database.db")
@@ -692,14 +709,9 @@ def envoyer_mails_programmes():
 
     mails = cur.fetchall()
 
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_user = "tonmail@gmail.com"
-    smtp_password = "mot_de_passe_app"
-
-    server = smtplib.SMTP(smtp_server, smtp_port)
+    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
     server.starttls()
-    server.login(smtp_user, smtp_password)
+    server.login(SMTP_USER, SMTP_PASSWORD)
 
     for mail in mails:
 
@@ -711,19 +723,17 @@ def envoyer_mails_programmes():
 
         placeholders = ",".join(["?"] * len(ines))
 
-        query = f"""
+        etudiants = cur.execute(f"""
             SELECT *
             FROM etudiants
             WHERE ine IN ({placeholders})
-        """
-
-        etudiants = cur.execute(query, ines).fetchall()
+        """, ines).fetchall()
 
         emails = []
 
+        # ---------------- EMAIL MODE ----------------
         for e in etudiants:
 
-            # ---------------- EMAIL MODE ----------------
             if mail["email_mode"] == 1:
                 if e["email_insa"]:
                     emails.append(e["email_insa"])
@@ -736,7 +746,7 @@ def envoyer_mails_programmes():
                     emails.append(e["email_insa"])
                 emails.append(e["email"])
 
-        # ---------------- ANNEES FILTER ----------------
+        # ---------------- FILTRE ANNÉES ----------------
         filtered_emails = []
 
         for e, email in zip(etudiants, emails):
@@ -751,18 +761,21 @@ def envoyer_mails_programmes():
                 filtered_emails.append(email)
 
         # ---------------- ENVOI ----------------
-
         if filtered_emails:
 
             msg = MIMEMultipart()
-            msg["From"] = smtp_user
+            msg["From"] = FROM_EMAIL
             msg["Subject"] = mail["objet"]
             msg.attach(MIMEText(mail["contenu"], "plain"))
 
             for email in filtered_emails:
-                server.sendmail(smtp_user, email, msg.as_string())
+                try:
+                    server.sendmail(FROM_EMAIL, email, msg.as_string())
+                    logging.info(f"Mail envoyé à {email}")
+                except Exception as e:
+                    logging.error(f"Erreur envoi {email}: {e}")
 
-        # marquer comme envoyé
+        # ---------------- UPDATE BDD ----------------
         cur.execute("""
             UPDATE mails
             SET envoye = 1
@@ -773,12 +786,22 @@ def envoyer_mails_programmes():
     conn.close()
     server.quit()
 
-scheduler = BackgroundScheduler()
 
+# ---------------- SCHEDULER ----------------
 def start_scheduler():
-    if os.environ.get("WERZEUG_RUN_MAIN") == "true":
+
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+
         if not scheduler.running:
-            scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
+
+            scheduler.add_job(
+                envoyer_mails_programmes,
+                "interval",
+                minutes=1,
+                max_instances=1,
+                coalesce=True
+            )
+
             scheduler.start()
             atexit.register(lambda: scheduler.shutdown())
 

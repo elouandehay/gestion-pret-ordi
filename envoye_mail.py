@@ -11,12 +11,14 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-SMTP_SERVER = "smtp.gmail.com"
+SMTP_SERVER = "smtp-relay.brevo.com"
 SMTP_PORT = 587
-SMTP_USER = ""
-SMTP_PASSWORD = ""
+SMTP_USER = "a9f8bd001@smtp-brevo.com"
+SMTP_PASSWORD = "5g1DOLEUS3ZcmTJI"
 
-DESTINATAIRE_TEST = ""
+FROM_EMAIL = "julian.kergosien@insa-rennes.fr"
+
+DESTINATAIRE_TEST = "julian.kergosien.dhn@gmail.com"
 
 HEURE_CIBLE = datetime.now().strftime("%H:%M")
 
@@ -27,13 +29,13 @@ def envoyer_mail_test():
     server.login(SMTP_USER, SMTP_PASSWORD)
 
     msg = MIMEMultipart()
-    msg["From"] = SMTP_USER
+    msg["From"] = FROM_EMAIL
     msg["To"] = DESTINATAIRE_TEST
     msg["Subject"] = "Le test fonctionne !"
 
     msg.attach(MIMEText("Ceci signifie que cela fonctionne correctement", "plain"))
 
-    server.sendmail(SMTP_USER, DESTINATAIRE_TEST, msg.as_string())
+    server.sendmail(FROM_EMAIL, DESTINATAIRE_TEST, msg.as_string())
     server.quit()
 
 def envoyer_mails_programmes():
