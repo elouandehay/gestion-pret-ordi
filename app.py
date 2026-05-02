@@ -18,6 +18,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+import logging
 
 DOSSIER_JSON = "cibles_etudiants"
 FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
@@ -692,9 +693,10 @@ HEURE_CIBLE = datetime.now().strftime("%H:%M")
 
 scheduler = BackgroundScheduler()
 
-
 # ---------------- CORE MAIL FUNCTION ----------------
 def envoyer_mails_programmes():
+
+    logging.info("exécution de envoyer_mails_programmes()")
 
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
@@ -788,22 +790,17 @@ def envoyer_mails_programmes():
 
 
 # ---------------- SCHEDULER ----------------
-def start_scheduler():
-
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-
-        if not scheduler.running:
-
-            scheduler.add_job(
-                envoyer_mails_programmes,
-                "interval",
-                minutes=1,
-                max_instances=1,
-                coalesce=True
-            )
-
-            scheduler.start()
-            atexit.register(lambda: scheduler.shutdown())
+def init_scheduler(app):
+    if not scheduler.running:
+        scheduler.add_job(
+            envoyer_mails_programmes,
+            "interval",
+            minutes=1,
+            max_instances=1,
+            coalesce=True
+        )
+        scheduler.start()
+        print("Scheduler started")
 
 # Update de la table des étudiants à partir des nouveaux .csv
 
@@ -1352,7 +1349,7 @@ def _appliquer_redo(conn, action):
             (action['numero_serie'], action['commentaire'])
         )
 
+#init_scheduler(app)
 
-if __name__ == '__main__':
-    start_scheduler()
+if __name__ == '__main__': 
     app.run(debug=True, ssl_context='adhoc')

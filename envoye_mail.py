@@ -18,7 +18,7 @@ SMTP_PASSWORD = "5g1DOLEUS3ZcmTJI"
 
 FROM_EMAIL = "julian.kergosien@insa-rennes.fr"
 
-DESTINATAIRE_TEST = "julian.kergosien.dhn@gmail.com"
+DESTINATAIRE_TEST = "julian.kergosien@insa-rennes.fr"
 
 HEURE_CIBLE = datetime.now().strftime("%H:%M")
 
