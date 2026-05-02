@@ -418,36 +418,44 @@ def afficher_mails():
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # DEBUG (OK mais à retirer après)
-    cur.execute("SELECT id, date_envoi FROM mails")
+    # DEBUG propre
+    cur.execute("SELECT id, date_envoi, envoye FROM mails")
     print(cur.fetchall())
 
-    # mails programmés (date future)
+    # ---------------- MAILS PROGRAMMÉS ----------------
+    # 👉 pas envoyés + date future
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
+        SELECT mails.id,
+               mails.objet,
+               mails.date_envoi,
+               mails.cible_id,
+               cibles_mails.cible
         FROM mails
         LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE datetime(mails.date_envoi) > datetime('now')
+        WHERE mails.envoye = 0
+          AND datetime(mails.date_envoi) > datetime('now')
+        ORDER BY mails.date_envoi ASC
     """)
 
-    rows = cur.fetchall()
-    print("DEBUG PROGRAMMES:", rows)
+    mails_programmes = [dict(r) for r in cur.fetchall()]
 
-    mails_programmes = [dict(r) for r in rows]
-
-    # mails envoyés (date passée)
+    # ---------------- MAILS ENVOYÉS ----------------
+    # 👉 envoyés = envoyés, point final (date ignorée)
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
+        SELECT mails.id,
+               mails.objet,
+               mails.date_envoi,
+               mails.cible_id,
+               cibles_mails.cible
         FROM mails
         LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE datetime(mails.date_envoi) <= datetime('now')
+        WHERE mails.envoye = 1
+        ORDER BY mails.date_envoi DESC
     """)
 
-    rows = cur.fetchall()
-    print("DEBUG ENVOYES:", rows)
+    mails_envoyes = [dict(r) for r in cur.fetchall()]
 
-    mails_envoyes = [dict(r) for r in rows]
-
+    # ---------------- CIBLES ----------------
     cibles = conn.execute("""
         SELECT id, cible, description
         FROM cibles_mails
@@ -553,22 +561,38 @@ def modifier_mail(id):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
+    # ---------------- POST ----------------
     if request.method == "POST":
+
         objet = request.form["objet"]
         contenu = request.form["contenu"]
         date_envoi = request.form["date_envoi"]
 
+        # 👉 logique métier importante :
+        # toute modification remet le mail en "non envoyé"
+        envoye = 0
+
         cur.execute("""
             UPDATE mails
-            SET objet = ?, contenu = ?, date_envoi = ?
+            SET objet = ?,
+                contenu = ?,
+                date_envoi = ?,
+                envoye = ?
             WHERE id = ?
-        """, (objet, contenu, date_envoi, id))
+        """, (
+            objet,
+            contenu,
+            date_envoi,
+            envoye,
+            id
+        ))
 
         conn.commit()
         conn.close()
 
         return redirect(url_for("afficher_mails"))
 
+    # ---------------- GET ----------------
     cur.execute("SELECT * FROM mails WHERE id = ?", (id,))
     mail = cur.fetchone()
 
@@ -663,22 +687,17 @@ def config_cible():
 
     return render_template("config_cible.html", etudiants=etudiants)
 
-def load_ines(cible_id):
-    path = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
-
-    if not os.path.exists(path):
-        return []
-
-    try:
-        with open(path, "r") as f:
-            data = json.load(f)
-    except json.JSONDecodeError:
-        return []
-
-    return data.get("ines", [])
-
 # ---------------- LOGGING ----------------
 logging.basicConfig(level=logging.INFO)
+
+def get_db():
+    conn = sqlite3.connect(
+        "database.db",
+        timeout=10,
+        check_same_thread=False
+    )
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # ---------------- BREVO CONFIG ----------------
 SMTP_SERVER = "smtp-relay.brevo.com"
@@ -698,15 +717,18 @@ def envoyer_mails_programmes():
 
     logging.info("exécution de envoyer_mails_programmes()")
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # ---------------- MAILS À TRAITER ----------------
     cur.execute("""
-        SELECT * FROM mails
-        WHERE envoye = 0 AND date_envoi <= ?
+        SELECT *
+        FROM mails
+        WHERE envoye = 0
+        AND date_envoi <= ?
     """, (now,))
 
     mails = cur.fetchall()
@@ -715,10 +737,13 @@ def envoyer_mails_programmes():
     server.starttls()
     server.login(SMTP_USER, SMTP_PASSWORD)
 
+    # =========================================================
+    # BOUCLE MAILS
+    # =========================================================
     for mail in mails:
 
         cible_id = mail["cible_id"]
-        ines = load_ines(cible_id)
+        ines = load_cible_ines(cible_id)
 
         if not ines:
             continue
@@ -731,53 +756,59 @@ def envoyer_mails_programmes():
             WHERE ine IN ({placeholders})
         """, ines).fetchall()
 
-        emails = []
+        # =========================================================
+        # CONSTRUCTION DES DESTINATAIRES (ROBUSTE)
+        # =========================================================
+        email_targets = set()
 
-        # ---------------- EMAIL MODE ----------------
         for e in etudiants:
 
-            if mail["email_mode"] == 1:
-                if e["email_insa"]:
-                    emails.append(e["email_insa"])
-
-            elif mail["email_mode"] == 2:
-                emails.append(e["email"])
-
-            else:
-                if e["email_insa"]:
-                    emails.append(e["email_insa"])
-                emails.append(e["email"])
-
-        # ---------------- FILTRE ANNÉES ----------------
-        filtered_emails = []
-
-        for e, email in zip(etudiants, emails):
-
+            # ---------------- FILTRE ANNÉES ----------------
             ok = (
                 (mail["annee3"] and e["annee"] == 3) or
                 (mail["annee4"] and e["annee"] == 4) or
                 (mail["annee5"] and e["annee"] == 5)
             )
 
-            if ok:
-                filtered_emails.append(email)
+            if not ok:
+                continue
 
-        # ---------------- ENVOI ----------------
-        if filtered_emails:
+            # ---------------- MODE EMAIL ----------------
+            if mail["email_mode"] == 1:
+                if e["email_insa"]:
+                    email_targets.add(e["email_insa"])
+
+            elif mail["email_mode"] == 2:
+                if e["email"]:
+                    email_targets.add(e["email"])
+
+            else:
+                # MODE 3 = double canal volontaire
+                if e["email_insa"]:
+                    email_targets.add(e["email_insa"])
+                if e["email"]:
+                    email_targets.add(e["email"])
+
+        # =========================================================
+        # ENVOI
+        # =========================================================
+        if email_targets:
 
             msg = MIMEMultipart()
             msg["From"] = FROM_EMAIL
             msg["Subject"] = mail["objet"]
             msg.attach(MIMEText(mail["contenu"], "plain"))
 
-            for email in filtered_emails:
+            for email in email_targets:
                 try:
                     server.sendmail(FROM_EMAIL, email, msg.as_string())
-                    logging.info(f"Mail envoyé à {email}")
+                    logging.info(f"Mail envoyé à {email} (mail_id={mail['id']})")
                 except Exception as e:
-                    logging.error(f"Erreur envoi {email}: {e}")
+                    logging.error(f"Erreur envoi {email} (mail_id={mail['id']}): {e}")
 
-        # ---------------- UPDATE BDD ----------------
+        # =========================================================
+        # UPDATE STATUT
+        # =========================================================
         cur.execute("""
             UPDATE mails
             SET envoye = 1
@@ -788,16 +819,16 @@ def envoyer_mails_programmes():
     conn.close()
     server.quit()
 
-
 # ---------------- SCHEDULER ----------------
 def init_scheduler(app):
     if not scheduler.running:
         scheduler.add_job(
             envoyer_mails_programmes,
-            "interval",
+            trigger="interval",
             minutes=1,
             max_instances=1,
-            coalesce=True
+            coalesce=True,
+            misfire_grace_time=30
         )
         scheduler.start()
         print("Scheduler started")
@@ -808,13 +839,6 @@ def write_json(path, ines):
     with open(path, "w") as f:
         json.dump({"ines": ines}, f)
 
-def flush_json_folder(folder):
-    if not os.path.exists(folder):
-        return
-
-    for file in os.listdir(folder):
-        if file.endswith(".json"):
-            os.remove(os.path.join(folder, file))
 
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
@@ -822,27 +846,23 @@ def update_etudiants():
 
     if request.method == "POST":
 
-        uploaded_files = request.files.getlist("files")
+        file_etudiants = request.files.get("file_etudiants")
+        file_prets = request.files.get("file_prets")
+        file_boursiers = request.files.get("file_boursiers")
+        file_autres = request.files.get("file_autres")
 
-        file1 = uploaded_files[0] if len(uploaded_files) > 0 else None
-        file2 = uploaded_files[1] if len(uploaded_files) > 1 else None
-        file3 = uploaded_files[2] if len(uploaded_files) > 2 else None
-        file4 = uploaded_files[3] if len(uploaded_files) > 3 else None
+        # ---------------- TRAITEMENT ----------------
+        process_etudiants(file_etudiants, file_prets, file_boursiers, file_autres)
 
-        process_etudiants(file1, file2, file3, file4)
-
-        flush_json_folder(DOSSIER_JSON)
         os.makedirs(DOSSIER_JSON, exist_ok=True)
 
         conn = sqlite3.connect("database.db")
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-        os.makedirs(DOSSIER_JSON, exist_ok=True)
-
-        # -----------------------
-        # CIBLE 3 : TOUS LES ETUDIANTS
-        # -----------------------
+        # ======================================================
+        # CIBLE 3 : TOUS LES ÉTUDIANTS
+        # ======================================================
         all_ines = [
             row["ine"] for row in cur.execute(
                 "SELECT ine FROM etudiants WHERE ine IS NOT NULL"
@@ -850,19 +870,22 @@ def update_etudiants():
         ]
         write_json(os.path.join(DOSSIER_JSON, "cible_3.json"), all_ines)
 
-        # -----------------------
+        # ======================================================
         # CIBLE 2 : BOURSIERS
-        # -----------------------
+        # ======================================================
         boursiers_ines = [
-            row["ine"] for row in cur.execute(
-                "SELECT ine FROM etudiants WHERE LOWER(boursier) = 'oui' AND ine IS NOT NULL"
-            ).fetchall()
+            row["ine"] for row in cur.execute("""
+                SELECT ine
+                FROM etudiants
+                WHERE LOWER(boursier) = 'oui'
+                AND ine IS NOT NULL
+            """).fetchall()
         ]
         write_json(os.path.join(DOSSIER_JSON, "cible_2.json"), boursiers_ines)
 
-        # -----------------------
-        # CIBLE 1 : PRETS ACTIFS
-        # -----------------------
+        # ======================================================
+        # CIBLE 1 : PRÊTS ACTIFS
+        # ======================================================
         prets_ines = [
             row["ine"] for row in cur.execute("""
                 SELECT e.ine

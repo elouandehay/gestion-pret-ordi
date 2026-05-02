@@ -1,39 +1,42 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <h2>Uploader les fichiers CSV des étudiants</h2>
 
 <form action="{{ url_for('update_etudiants') }}" method="post" enctype="multipart/form-data">
+
     <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
-        <label for="file1">Fichier de suivi des inscription :</label>
-        <input type="file" id="file1" name="files" required>
+        <label for="file1">Fichier de suivi des inscriptions :</label>
+        <input type="file" id="file1" name="file_etudiants" required>
     </div>
 
     <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
         <label for="file2">Fichier des étudiants en troisième année d'informatique :</label>
-        <input type="file" id="file2" name="files">
+        <input type="file" id="file2" name="file_3a">
     </div>
 
     <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
         <label for="file3">Fichier des étudiants en quatrième année d'informatique :</label>
-        <input type="file" id="file3" name="files">
+        <input type="file" id="file3" name="file_4a">
     </div>
 
     <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
         <label for="file4">Fichier des étudiants en cinquième année d'informatique :</label>
-        <input type="file" id="file4" name="files">
+        <input type="file" id="file4" name="file_5a">
     </div>
 
     <div style="text-align:center; margin-top:10px;">
         <button type="submit"
                 style="background-color:#007bff; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:16px;">
-             Uploader et mettre à jour la base
-
+            Uploader et mettre à jour la base
         </button>
     </div>
+
 </form>
 
 <div style="margin-top:20px;">
     <a href="{{ url_for('index') }}">← Retour à l'accueil</a>
 </div>
+
 {% endblock %}
