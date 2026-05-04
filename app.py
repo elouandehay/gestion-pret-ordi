@@ -877,7 +877,7 @@ def update_etudiants():
             row["ine"] for row in cur.execute("""
                 SELECT ine
                 FROM etudiants
-                WHERE LOWER(boursier) = 'oui'
+                WHERE boursier = 1
                 AND ine IS NOT NULL
             """).fetchall()
         ]

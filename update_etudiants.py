@@ -40,7 +40,8 @@ def process_etudiants(registration_file, info3_file=None, info4_file=None, info5
         prenom = row.get("Prénom")
         ine = row.get("N°INE")
         email = row.get("Email")
-        boursier = row.get("Témoin bourse")
+        boursier_raw = row.get("Témoin bourse", "").strip().lower()
+        boursier = 1 if boursier_raw in ["oui", "o", "yes", "true", "1"] else 0
         regime_inscription = row.get("Régime Inscription")
         code_apprenant = row.get("Code Apprenant")
 
