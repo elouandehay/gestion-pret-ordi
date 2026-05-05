@@ -40,7 +40,9 @@ def process_etudiants(registration_file, info3_file=None, info4_file=None, info5
         prenom = row.get("Prénom")
         ine = row.get("N°INE")
         email = row.get("Email")
-        boursier = row.get("Témoin bourse")
+        # On convertit en 1 si le texte est "Oui", "O", "1" ou "True"
+        raw_boursier = str(row.get("Témoin bourse", "")).strip().lower()
+        boursier = 1 if raw_boursier in ['oui', 'o', '1', 'true'] else 0
         regime_inscription = row.get("Régime Inscription")
         code_apprenant = row.get("Code Apprenant")
 
@@ -70,7 +72,7 @@ def process_etudiants(registration_file, info3_file=None, info4_file=None, info5
                     en_scolarite=?
                 WHERE nom=? AND prenom=?
                 """,
-                (code_apprenant, email, boursier, ine, regime_inscription, annee, "oui", nom, prenom)
+                (code_apprenant, email, boursier, ine, regime_inscription, annee, 1, nom, prenom)
             )
         else:
             cur.execute(
@@ -84,7 +86,7 @@ def process_etudiants(registration_file, info3_file=None, info4_file=None, info5
                 """,
                 (id_counter, nom, prenom, email, boursier,
                  ine, regime_inscription, annee,
-                 "oui", code_apprenant)
+                 1, code_apprenant)
             )
 
     conn.commit()

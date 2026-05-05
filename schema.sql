@@ -29,11 +29,11 @@ CREATE TABLE etudiants (
     prenom TEXT NOT NULL,
     email TEXT NOT NULL,
     email_insa TEXT,
-    boursier BOOL NOT NULL,
+    boursier INTEGER NOT NULL DEFAULT 0,
     ine TEXT,
     regime_scolarite TEXT NOT NULL,
     annee INTEGER DEFAULT NULL,
-    en_scolarite BOOL DEFAULT 1
+    en_scolarite INTEGER DEFAULT 1
 );
 
 CREATE TABLE prets (

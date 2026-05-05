@@ -9,11 +9,11 @@
 <p><strong>Email :</strong> {{ etudiant.email }}</p>
 <p><strong>INE :</strong> {{ etudiant.ine }}</p>
 <p><strong>Année :</strong> {{ etudiant.annee }}</p>
-<p><strong>Statut :</strong>
-    {% if etudiant.boursier == 1 %}
-        Boursier
+<p>Statut boursier : 
+    {% if etudiant.boursier|string in ['1', 'True', 'true', 'Oui'] %}
+        <span class="badge bg-success">Oui</span>
     {% else %}
-        Non boursier
+        <span class="badge bg-danger">Non</span>
     {% endif %}
 </p>
 

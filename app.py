@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, request, \
-    redirect, url_for, render_template, send_file, jsonify
+    redirect, url_for, render_template, send_file, jsonify, request, redirect, url_for, render_template, send_file
+    
 from datetime import datetime
 import sqlite3
 from functools import wraps
@@ -7,21 +8,34 @@ import bcrypt
 import json
 import os
 import shutil
+from flask_wtf.csrf import CSRFProtect
 import threading
 from werkzeug.utils import secure_filename
 from Convention.generation_convention import generer_convention
-from flask import request, redirect, url_for, render_template, send_file
 from werkzeug.utils import secure_filename
 from update_etudiants import process_etudiants
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 # import yagmail
 # from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.secret_key = '3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
 
+#csrf = CSRFProtect(app) #rajouter ds les fichiers html : <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+)
+
+
 
 BACKUP_DIR = os.path.join(os.path.dirname(__file__), 'backups')
 DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
@@ -106,6 +120,7 @@ def planifier_backup_periodique(user):
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -257,7 +272,7 @@ def emprunter(numero_serie):
         return redirect(url_for('index'))
 
     # Déterminer les cautions selon le statut boursier
-    if etudiant['boursier'] == 1:
+    if str(etudiant['boursier']) in ['1', 'True', 'true', 'OUI', 'Oui']:
         caution_prof_validee = 1
         caution_compta_validee = 1
     else:
@@ -1058,6 +1073,40 @@ def _appliquer_redo(conn, action):
             (action['numero_serie'], action['commentaire'])
         )
 
+
+@app.route('/admin/create', methods=['GET', 'POST'])
+@login_required
+def create_admin():
+    if request.method == 'POST':
+        new_username = request.form.get('username').strip()
+        new_password = request.form.get('password')
+
+        if not new_username or not new_password:
+            flash("Tous les champs sont obligatoires.")
+            return redirect(url_for('create_admin'))
+
+        # Hachage du mot de passe avec bcrypt (comme dans ton script d'init)
+        hashed = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+        conn = get_db_connection()
+        try:
+            conn.execute(
+                "INSERT INTO administrateurs (username, password_hash) VALUES (?, ?)",
+                (new_username, hashed.decode('utf-8') if isinstance(hashed, bytes) else hashed)
+            )
+            conn.commit()
+            
+            # On log l'action pour la sécurité
+            write_log(conn, f"Nouvel administrateur créé : {new_username}", {'user_created': new_username})
+            
+            flash(f"Le compte admin '{new_username}' a été créé avec succès.")
+            return redirect(url_for('index'))
+        except sqlite3.IntegrityError:
+            flash("Erreur : Ce nom d'utilisateur existe déjà.")
+        finally:
+            conn.close()
+
+    return render_template('create_admin.html')
 
 if __name__ == '__main__':
     app.run(debug=True, ssl_context='adhoc')
