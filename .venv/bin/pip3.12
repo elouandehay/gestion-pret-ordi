@@ -1,4 +1,4 @@
-#!/home/jkergosi/Documents/3INFO/EP2/gestion-pret-ordi/.venv/bin/python3
+#!/home/jkergosi/Documents/3INFO/Etude_Pratique/gestion-pret-ordi/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

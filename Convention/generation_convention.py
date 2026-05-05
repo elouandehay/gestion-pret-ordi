@@ -3,12 +3,12 @@ from datetime import date
 import subprocess
 import os
 
-def generer_convention(nom, prenom, annee_etude, ine, observation, modele, numero_inventaire, numero_serie):
+def generer_convention(nom, prenom, annee_etude, ine, observation, modele, numero_inventaire, numero_serie, pret_id):
 
     jour = date.today().strftime("%d/%m/%Y")
 
     base_dir = "Convention/conventions_generees"
-    convention_dir = os.path.join(base_dir, f"convention_{ine}")
+    convention_dir = os.path.join(base_dir, f"convention_{pret_id}")
 
     os.makedirs(convention_dir, exist_ok=True)
 
@@ -28,7 +28,7 @@ def generer_convention(nom, prenom, annee_etude, ine, observation, modele, numer
         numero_serie=numero_serie
     )
 
-    tex_file = os.path.join(convention_dir, f"convention_{ine}.tex")
+    tex_file = os.path.join(convention_dir, f"convention_{pret_id}.tex")
 
     with open(tex_file, "w", encoding="utf-8") as f:
         f.write(output)
@@ -53,7 +53,7 @@ def generer_convention(nom, prenom, annee_etude, ine, observation, modele, numer
     print(result.stderr)
     print(result.stdout)
 
-    pdf_file = os.path.join(convention_dir, f"convention_{ine}.pdf")
+    pdf_file = os.path.join(convention_dir, f"convention_{pret_id}.pdf")
 
     if os.path.exists(pdf_file):
         print(f"{pdf_file} généré avec succès.")

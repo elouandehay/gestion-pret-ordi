@@ -18,6 +18,15 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 # import yagmail
 # from apscheduler.schedulers.background import BackgroundScheduler
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
+import logging
+
+DOSSIER_JSON = "cibles_etudiants"
+FICHIER_COURANT = os.path.join(DOSSIER_JSON, "cible_courante.json")
 
 app = Flask(__name__)
 app.secret_key = '3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24d4'
@@ -169,13 +178,14 @@ def index():
 
     ordinateurs = conn.execute("""
         SELECT o.numero_serie, o.numero_inventaire, o.modele, o.date_sortie, o.dispo,
-               e.id as etudiant_id, e.nom, e.prenom,
-               p.caution_prof_validee, p.caution_compta_validee
+            e.id as etudiant_id, e.nom, e.prenom,
+            p.id as pret_id,
+            p.caution_prof_validee, p.caution_compta_validee
         FROM ordinateurs o
-        LEFT JOIN prets p ON o.numero_serie = p.ordinateur_id AND o.dispo = 0
+        LEFT JOIN prets p ON o.numero_serie = p.ordinateur_id
         LEFT JOIN etudiants e ON p.etudiant_id = e.id
         ORDER BY o.date_sortie ASC
-    """).fetchall()
+        """).fetchall()
 
     commentaires = conn.execute("""
         SELECT ordinateur_id, commentaire, date_commentaire
@@ -405,7 +415,15 @@ def ajouter_pc_individuel():
         date_sortie = request.args.get('date_sortie')
         return render_template('ajouter_pc_individuel.html', modele=modele_pc, date_sortie=date_sortie)
 
+@app.route('/telecharger_convention/<int:pret_id>')
+def telecharger_convention_pret(pret_id):
 
+    path = f"Convention/conventions_generees/convention_{pret_id}/convention_{pret_id}.pdf"
+
+    if not os.path.exists(path):
+        return "Fichier introuvable", 404
+
+    return send_file(path, as_attachment=True)
 
 # Programmation de l'envoye de mails
 
@@ -417,80 +435,127 @@ def afficher_mails():
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # DEBUG (OK mais à retirer après)
-    cur.execute("SELECT id, date_envoi FROM mails")
+    # DEBUG propre
+    cur.execute("SELECT id, date_envoi, envoye FROM mails")
     print(cur.fetchall())
 
-    # mails programmés (date future)
+    # ---------------- MAILS PROGRAMMÉS ----------------
+    # 👉 pas envoyés + date future
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
+        SELECT mails.id,
+               mails.objet,
+               mails.date_envoi,
+               mails.cible_id,
+               cibles_mails.cible
         FROM mails
         LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE datetime(mails.date_envoi) > datetime('now')
+        WHERE mails.envoye = 0
+          AND datetime(mails.date_envoi) > datetime('now')
+        ORDER BY mails.date_envoi ASC
     """)
 
-    rows = cur.fetchall()
-    print("DEBUG PROGRAMMES:", rows)
+    mails_programmes = [dict(r) for r in cur.fetchall()]
 
-    mails_programmes = [dict(r) for r in rows]
-
-    # mails envoyés (date passée)
+    # ---------------- MAILS ENVOYÉS ----------------
+    # 👉 envoyés = envoyés, point final (date ignorée)
     cur.execute("""
-        SELECT mails.id, mails.objet, mails.date_envoi, mails.cible_id
+        SELECT mails.id,
+               mails.objet,
+               mails.date_envoi,
+               mails.cible_id,
+               cibles_mails.cible
         FROM mails
         LEFT JOIN cibles_mails ON mails.cible_id = cibles_mails.id
-        WHERE datetime(mails.date_envoi) <= datetime('now')
+        WHERE mails.envoye = 1
+        ORDER BY mails.date_envoi DESC
     """)
 
-    rows = cur.fetchall()
-    print("DEBUG ENVOYES:", rows)
+    mails_envoyes = [dict(r) for r in cur.fetchall()]
 
-    mails_envoyes = [dict(r) for r in rows]
+    # ---------------- CIBLES ----------------
+    cibles = conn.execute("""
+        SELECT id, cible, description
+        FROM cibles_mails
+        ORDER BY id
+    """).fetchall()
 
     conn.close()
 
     return render_template(
         "mail.html",
         mails_programmes=mails_programmes,
-        mails_envoyes=mails_envoyes
+        mails_envoyes=mails_envoyes,
+        cibles=cibles
     )
+
+def load_cible_ines(cible_id):
+    path = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
+
+    if not os.path.exists(path):
+        return []
+
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        return []
+
+    return data.get("ines", [])
+
 
 @app.route("/mail/ajouter", methods=["POST"])
 @login_required
 def ajouter_mail():
 
     conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    cible = request.form["cible"]
+    cible_id = int(request.form["cible"])
     objet = request.form["objet"]
     contenu = request.form["contenu"]
-    date_envoi = request.form["date_envoi"]
+    date_envoi = request.form["date_envoi"].replace("T", " ") + ":00"
 
-    # conversion propre HTML -> SQLite
-    date_envoi = date_envoi.replace("T", " ") + ":00"
+    email_mode = int(request.form.get("email_mode", 3))
 
-    mapping = {
-        "retard": 1,
-        "boursiers": 2
-    }
+    annee3 = 1 if request.form.get("annee_1") else 0
+    annee4 = 1 if request.form.get("annee_2") else 0
+    annee5 = 1 if request.form.get("annee_3") else 0
 
-    cible_id = mapping[cible]
+    # 🔥 charge les INE depuis JSON cible dynamique
+    ines = load_cible_ines(cible_id)
+
+    # optionnel : on peut les utiliser pour audit/log ou futur traitement
+    # print(ines)
 
     cur.execute("""
-        INSERT INTO mails (cible_id, objet, contenu, date_envoi, envoye)
-        VALUES (?, ?, ?, ?, 0)
-    """, (cible_id, objet, contenu, date_envoi))
+        INSERT INTO mails (
+            cible_id,
+            objet,
+            contenu,
+            date_envoi,
+            envoye,
+            email_mode,
+            annee3,
+            annee4,
+            annee5
+        )
+        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)
+    """, (
+        cible_id,
+        objet,
+        contenu,
+        date_envoi,
+        email_mode,
+        annee3,
+        annee4,
+        annee5
+    ))
 
     conn.commit()
     conn.close()
 
     return redirect(url_for("afficher_mails"))
-
-@app.route("/mail/cible", methods=["GET"])
-@login_required
-def cible_mail():
-    return render_template("cible.html")
 
 @app.route("/mail/supprimer/<int:id>")
 @login_required
@@ -513,22 +578,38 @@ def modifier_mail(id):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
+    # ---------------- POST ----------------
     if request.method == "POST":
+
         objet = request.form["objet"]
         contenu = request.form["contenu"]
         date_envoi = request.form["date_envoi"]
 
+        # 👉 logique métier importante :
+        # toute modification remet le mail en "non envoyé"
+        envoye = 0
+
         cur.execute("""
             UPDATE mails
-            SET objet = ?, contenu = ?, date_envoi = ?
+            SET objet = ?,
+                contenu = ?,
+                date_envoi = ?,
+                envoye = ?
             WHERE id = ?
-        """, (objet, contenu, date_envoi, id))
+        """, (
+            objet,
+            contenu,
+            date_envoi,
+            envoye,
+            id
+        ))
 
         conn.commit()
         conn.close()
 
         return redirect(url_for("afficher_mails"))
 
+    # ---------------- GET ----------------
     cur.execute("SELECT * FROM mails WHERE id = ?", (id,))
     mail = cur.fetchone()
 
@@ -536,108 +617,305 @@ def modifier_mail(id):
 
     return render_template("modifier_mail.html", mail=mail)
 
-# Envoye des mails non-envoyes de la base
-
-# def envoyer_mails_programmes():
-#
-#     conn = sqlite3.connect("database.db")
-#     conn.row_factory = sqlite3.Row
-#     cur = conn.cursor()
-#
-#     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-#
-#     cur.execute("""
-#         SELECT * FROM mails
-#         WHERE envoye = 0 AND date_envoi <= ?
-#     """, (now,))
-#
-#     mails = cur.fetchall()
-#
-#     yag = yagmail.SMTP("tonmail@gmail.com", "mot_de_passe_app")
-#
-#     for mail in mails:
-#
-#         cible_id = mail["cible_id"]
-#
-#         # déterminer les destinataires
-#         if cible_id == 1:  # retard
-#             cur.execute("SELECT email FROM etudiants WHERE retard = 1")
-#
-#         elif cible_id == 2:  # tous
-#             cur.execute("SELECT email FROM etudiants")
-#
-#         elif cible_id == 3:  # boursiers
-#             cur.execute("SELECT email FROM etudiants WHERE boursier = 1")
-#
-#         emails = [row["email"] for row in cur.fetchall()]
-#
-#         if emails:
-#             yag.send(
-#                 to=emails,
-#                 subject=mail["objet"],
-#                 contents=mail["contenu"]
-#             )
-#
-#         # marquer comme envoyé
-#         cur.execute("""
-#             UPDATE mails
-#             SET envoye = 1
-#             WHERE id = ?
-#         """, (mail["id"],))
-#
-#     conn.commit()
-#     conn.close()
-#
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(envoyer_mails_programmes, "interval", minutes=1)
-# scheduler.start()
-#
-
-@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
+@app.route("/mail/cible", methods=["GET"])
 @login_required
-def supprimer(numero_serie):
+def cible_mail():
+    return render_template("cible.html")
+
+def load_json_safe(path):
+    if not os.path.exists(path):
+        return {"ines": []}
+    if os.path.getsize(path) == 0:
+        return {"ines": []}
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        return {"ines": []}
+    if "ines" not in data:
+        data["ines"] = []
+    return data
+
+
+@app.route('/mail/cible/config', methods=['GET', 'POST'])
+@login_required
+def config_cible():
     conn = get_db_connection()
+    os.makedirs(DOSSIER_JSON, exist_ok=True)
 
-    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
-    if pret:
-        conn.close()
-        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
+    data = load_json_safe(FICHIER_COURANT)
 
-    ordi = conn.execute("SELECT * FROM ordinateurs WHERE numero_serie = ?", (numero_serie,)).fetchone()
-    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
+    if request.method == 'POST':
 
-    action = {
-        'type': 'supprimer',
-        'numero_serie': numero_serie,
-        'numero_inventaire': ordi['numero_inventaire'],
-        'modele': ordi['modele'],
-        'date_sortie': ordi['date_sortie'],
-    }
-    push_undo(action)
-    write_log(conn, f"Suppression de l'ordinateur {numero_serie} ({ordi['modele']})", action)
+        if "ajouter_ine" in request.form:
+            nom = request.form.get("nom")
+            prenom = request.form.get("prenom")
+
+            if nom and prenom:
+                row = conn.execute(
+                    "SELECT ine FROM etudiants WHERE nom = ? AND prenom = ?",
+                    (nom, prenom)
+                ).fetchone()
+
+                if row:
+                    ine = row["ine"]
+
+                    if ine and ine not in data["ines"]:
+                        data["ines"].append(ine)
+
+                    with open(FICHIER_COURANT, "w") as f:
+                        json.dump(data, f)
+
+            return redirect(url_for('config_cible'))
+
+        if "creer_cible" in request.form:
+            nom_cible = request.form.get('nom_cible')
+            description_cible = request.form.get('description_cible')
+
+            cur = conn.execute(
+                "INSERT INTO cibles_mails (cible, description) VALUES (?, ?)",
+                (nom_cible, description_cible)
+            )
+            cible_id = cur.lastrowid
+
+            fichier_final = os.path.join(DOSSIER_JSON, f"cible_{cible_id}.json")
+            with open(fichier_final, "w") as f:
+                json.dump(data, f)
+
+            with open(FICHIER_COURANT, "w") as f:
+                json.dump({"ines": []}, f)
+
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('afficher_mails'))
+
+    etudiants = []
+    if data.get("ines"):
+        placeholders = ",".join(["?"] * len(data["ines"]))
+        query = f"""
+            SELECT nom, prenom, email, email_insa, ine
+            FROM etudiants
+            WHERE ine IN ({placeholders})
+        """
+        etudiants = conn.execute(query, data["ines"]).fetchall()
+
+    conn.close()
+
+    return render_template("config_cible.html", etudiants=etudiants)
+
+# ---------------- LOGGING ----------------
+logging.basicConfig(level=logging.INFO)
+
+def get_db():
+    conn = sqlite3.connect(
+        "database.db",
+        timeout=10,
+        check_same_thread=False
+    )
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# ---------------- BREVO CONFIG ----------------
+SMTP_SERVER = "smtp-relay.brevo.com"
+SMTP_PORT = 587
+SMTP_USER = "a9f8bd001@smtp-brevo.com"
+SMTP_PASSWORD = "5g1DOLEUS3ZcmTJI"
+
+FROM_EMAIL = "julian.kergosien@insa-rennes.fr"
+
+# ---------------- SCHEDULER CONFIG ----------------
+HEURE_CIBLE = datetime.now().strftime("%H:%M")
+
+scheduler = BackgroundScheduler()
+
+# ---------------- CORE MAIL FUNCTION ----------------
+def envoyer_mails_programmes():
+
+    logging.info("exécution de envoyer_mails_programmes()")
+
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    # ---------------- MAILS À TRAITER ----------------
+    cur.execute("""
+        SELECT *
+        FROM mails
+        WHERE envoye = 0
+        AND date_envoi <= ?
+    """, (now,))
+
+    mails = cur.fetchall()
+
+    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+    server.starttls()
+    server.login(SMTP_USER, SMTP_PASSWORD)
+
+    # =========================================================
+    # BOUCLE MAILS
+    # =========================================================
+    for mail in mails:
+
+        cible_id = mail["cible_id"]
+        ines = load_cible_ines(cible_id)
+
+        if not ines:
+            continue
+
+        placeholders = ",".join(["?"] * len(ines))
+
+        etudiants = cur.execute(f"""
+            SELECT *
+            FROM etudiants
+            WHERE ine IN ({placeholders})
+        """, ines).fetchall()
+
+        # =========================================================
+        # CONSTRUCTION DES DESTINATAIRES (ROBUSTE)
+        # =========================================================
+        email_targets = set()
+
+        for e in etudiants:
+
+            # ---------------- FILTRE ANNÉES ----------------
+            ok = (
+                (mail["annee3"] and e["annee"] == 3) or
+                (mail["annee4"] and e["annee"] == 4) or
+                (mail["annee5"] and e["annee"] == 5)
+            )
+
+            if not ok:
+                continue
+
+            # ---------------- MODE EMAIL ----------------
+            if mail["email_mode"] == 1:
+                if e["email_insa"]:
+                    email_targets.add(e["email_insa"])
+
+            elif mail["email_mode"] == 2:
+                if e["email"]:
+                    email_targets.add(e["email"])
+
+            else:
+                # MODE 3 = double canal volontaire
+                if e["email_insa"]:
+                    email_targets.add(e["email_insa"])
+                if e["email"]:
+                    email_targets.add(e["email"])
+
+        # =========================================================
+        # ENVOI
+        # =========================================================
+        if email_targets:
+
+            msg = MIMEMultipart()
+            msg["From"] = FROM_EMAIL
+            msg["Subject"] = mail["objet"]
+            msg.attach(MIMEText(mail["contenu"], "plain"))
+
+            for email in email_targets:
+                try:
+                    server.sendmail(FROM_EMAIL, email, msg.as_string())
+                    logging.info(f"Mail envoyé à {email} (mail_id={mail['id']})")
+                except Exception as e:
+                    logging.error(f"Erreur envoi {email} (mail_id={mail['id']}): {e}")
+
+        # =========================================================
+        # UPDATE STATUT
+        # =========================================================
+        cur.execute("""
+            UPDATE mails
+            SET envoye = 1
+            WHERE id = ?
+        """, (mail["id"],))
 
     conn.commit()
     conn.close()
-    return redirect(url_for('index'))
+    server.quit()
+
+# ---------------- SCHEDULER ----------------
+def init_scheduler(app):
+    if not scheduler.running:
+        scheduler.add_job(
+            envoyer_mails_programmes,
+            trigger="interval",
+            minutes=1,
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=30
+        )
+        scheduler.start()
+        print("Scheduler started")
 
 # Update de la table des étudiants à partir des nouveaux .csv
+
+def write_json(path, ines):
+    with open(path, "w") as f:
+        json.dump({"ines": ines}, f)
+
 
 @app.route("/update_etudiants", methods=["GET", "POST"])
 @login_required
 def update_etudiants():
+
     if request.method == "POST":
-        uploaded_files = request.files.getlist("files")
-        # On prend jusqu'à 4 fichiers
 
-        file1 = uploaded_files[0] if len(uploaded_files) > 0 else None
-        file2 = uploaded_files[1] if len(uploaded_files) > 1 else None
-        file3 = uploaded_files[2] if len(uploaded_files) > 2 else None
-        file4 = uploaded_files[3] if len(uploaded_files) > 3 else None
+        file_etudiants = request.files.get("file_etudiants")
+        file_prets = request.files.get("file_prets")
+        file_boursiers = request.files.get("file_boursiers")
+        file_autres = request.files.get("file_autres")
 
-        process_etudiants(file1, file2, file3, file4)
+        # ---------------- TRAITEMENT ----------------
+        process_etudiants(file_etudiants, file_prets, file_boursiers, file_autres)
+
+        os.makedirs(DOSSIER_JSON, exist_ok=True)
+
+        conn = sqlite3.connect("database.db")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        # ======================================================
+        # CIBLE 3 : TOUS LES ÉTUDIANTS
+        # ======================================================
+        all_ines = [
+            row["ine"] for row in cur.execute(
+                "SELECT ine FROM etudiants WHERE ine IS NOT NULL"
+            ).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_3.json"), all_ines)
+
+        # ======================================================
+        # CIBLE 2 : BOURSIERS
+        # ======================================================
+        boursiers_ines = [
+            row["ine"] for row in cur.execute("""
+                SELECT ine
+                FROM etudiants
+                WHERE boursier = 1
+                AND ine IS NOT NULL
+            """).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_2.json"), boursiers_ines)
+
+        # ======================================================
+        # CIBLE 1 : PRÊTS ACTIFS
+        # ======================================================
+        prets_ines = [
+            row["ine"] for row in cur.execute("""
+                SELECT e.ine
+                FROM etudiants e
+                JOIN prets p ON p.etudiant_id = e.id
+                WHERE e.ine IS NOT NULL
+            """).fetchall()
+        ]
+        write_json(os.path.join(DOSSIER_JSON, "cible_1.json"), prets_ines)
+
+        conn.close()
 
         flash("Les étudiants ont été mis à jour avec succès.")
-
         return redirect(url_for("index"))
 
     return render_template("update_etudiants.html")
@@ -742,6 +1020,16 @@ def generation_convention():
         numero_inventaire = ordinateur["numero_inventaire"]
         numero_serie = ordinateur["numero_serie"]
 
+        # Insertion du pret
+        cursor = conn.execute("""
+            INSERT INTO prets (etudiant_id, ordinateur_id)
+            VALUES (?, ?)
+        """, (etudiant["id"], numero_serie))
+
+        # Récupération de l'id du prêt créé
+        pret_id = cursor.lastrowid
+
+        # Mettre l'ordi dans l'état emprunter
         conn.execute(
             "UPDATE ordinateurs SET dispo = 0 WHERE numero_serie = ?",
             (numero_serie,)
@@ -765,7 +1053,8 @@ def generation_convention():
             observation,
             modele,
             numero_inventaire,
-            numero_serie
+            numero_serie,
+            pret_id
         )
 
         return redirect(url_for('index'))
@@ -801,6 +1090,33 @@ def valider_caution_compta(numero_serie):
     action = {'type': 'valider_caution_compta', 'numero_serie': numero_serie}
     push_undo(action)
     write_log(conn, f"Validation caution comptable pour {numero_serie}", action)
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
+@app.route('/supprimer/<path:numero_serie>', methods=['POST'])
+@login_required
+def supprimer(numero_serie):
+    conn = get_db_connection()
+
+    pret = conn.execute("SELECT * FROM prets WHERE ordinateur_id = ?", (numero_serie,)).fetchone()
+    if pret:
+        conn.close()
+        return "Erreur : impossible de supprimer un ordinateur en prêt !", 400
+
+    ordi = conn.execute("SELECT * FROM ordinateurs WHERE numero_serie = ?", (numero_serie,)).fetchone()
+    conn.execute("DELETE FROM ordinateurs WHERE numero_serie = ?", (numero_serie,))
+
+    action = {
+        'type': 'supprimer',
+        'numero_serie': numero_serie,
+        'numero_inventaire': ordi['numero_inventaire'],
+        'modele': ordi['modele'],
+        'date_sortie': ordi['date_sortie'],
+    }
+    push_undo(action)
+    write_log(conn, f"Suppression de l'ordinateur {numero_serie} ({ordi['modele']})", action)
 
     conn.commit()
     conn.close()
@@ -1073,7 +1389,9 @@ def _appliquer_redo(conn, action):
             (action['numero_serie'], action['commentaire'])
         )
 
+#init_scheduler(app)
 
+<<<<<<< HEAD
 @app.route('/admin/create', methods=['GET', 'POST'])
 @login_required
 def create_admin():

@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -28,7 +27,7 @@
         min-height: 120px;
     }
 
-    form button {
+    .btn {
         margin-top: 20px;
     }
 
@@ -41,7 +40,6 @@
     table th, table td {
         border: 1px solid #ccc;
         padding: 8px;
-        text-align: left;
     }
 
     table th {
@@ -55,29 +53,46 @@
 
 <h3>Programmer un mail</h3>
 
-<form action="{{ url_for('cible_mail') }}" method="get">
-    <button type="submit">Configuration des cibles</button>
-</form>
+<a href="{{ url_for('config_cible') }}">
+    <button type="button">Configuration d'une cible</button>
+</a>
 
 <form action="{{ url_for('ajouter_mail') }}" method="post">
 
-<label for="cible">Cible :</label>
-<select id="cible" name="cible" required>
-    <option value="retard">Étudiants n'ayant pas rendu le matériel</option>
-    <option value="boursiers">Étudiants boursiers</option>
-</select>
+    <label>Cible :</label>
+      <select name="cible" required>
+        {% for cible in cibles %}
+            <option value="{{ cible.id }}">
+                {{ cible.description }}
+            </option>
+        {% endfor %}
+      </select>
+    <label>Type d'adresse email :</label>
 
-<label for="objet">Objet du mail :</label>
-<input type="text" id="objet" name="objet" required>
+    <div style="display:flex; gap:15px;">
+        <label><input type="radio" name="email_mode" value="1" checked> INSA</label>
+        <label><input type="radio" name="email_mode" value="2"> Personnel</label>
+        <label><input type="radio" name="email_mode" value="3"> Les deux</label>
+    </div>
 
-<label for="contenu">Contenu du mail :</label>
-<textarea id="contenu" name="contenu" required></textarea>
+    <label>Années :</label>
 
-<label for="date_envoi">Date et heure d'envoi :</label>
-<input type="datetime-local" id="date_envoi" name="date_envoi" required>
+    <div style="display:flex; gap:15px;">
+        <label><input type="checkbox" name="annee_1" checked> 3A</label>
+        <label><input type="checkbox" name="annee_2" checked> 4A</label>
+        <label><input type="checkbox" name="annee_3" checked> 5A</label>
+    </div>
 
-<button type="submit">Programmer l'envoi</button>
+    <label>Objet :</label>
+    <input type="text" name="objet" required>
 
+    <label>Contenu :</label>
+    <textarea name="contenu" required></textarea>
+
+    <label>Date d'envoi :</label>
+    <input type="datetime-local" name="date_envoi" required>
+
+    <button type="submit" class="btn">Programmer l'envoi</button>
 
 </form>
 
@@ -88,27 +103,24 @@
         <tr>
             <th>Cible</th>
             <th>Objet</th>
-            <th>Date d'envoi</th>
+            <th>Date</th>
             <th>Actions</th>
         </tr>
     </thead>
 
     <tbody>
-
-    {% for mail in mails_programmes %}
-      <tr>
-          <td>{{ mail.cible_id }}</td>
-          <td>{{ mail.objet }}</td>
-          <td>{{ mail.date_envoi }}</td>
-          <td class="actions">
-              <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
-              <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
-          </td>
-      </tr>
-    {% endfor %}
-
+        {% for mail in mails_programmes %}
+        <tr>
+            <td>{{ mail.cible_id }}</td>
+            <td>{{ mail.objet }}</td>
+            <td>{{ mail.date_envoi }}</td>
+            <td class="actions">
+                <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
+                <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
-
 </table>
 
 <h3>Mails envoyés</h3>
@@ -118,30 +130,26 @@
         <tr>
             <th>Cible</th>
             <th>Objet</th>
-            <th>Date d'envoi</th>
+            <th>Date</th>
             <th>Actions</th>
         </tr>
     </thead>
 
     <tbody>
-
-    {% for mail in mails_envoyes %}
-      <tr>
-          <td>{{ mail.cible }}</td>
-          <td>{{ mail.objet }}</td>
-          <td>{{ mail.date_envoi }}</td>
-          <td class="actions">
-              <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
-              <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
-          </td>
-      </tr>
-    {% endfor %}
-
+        {% for mail in mails_envoyes %}
+        <tr>
+            <td>{{ mail.cible }}</td>
+            <td>{{ mail.objet }}</td>
+            <td>{{ mail.date_envoi }}</td>
+            <td class="actions">
+                <a href="{{ url_for('modifier_mail', id=mail.id) }}">Modifier</a>
+                <a href="{{ url_for('supprimer_mail', id=mail.id) }}">Supprimer</a>
+            </td>
+        </tr>
+        {% endfor %}
     </tbody>
-
 </table>
 
-
-<a href="{{ url_for('index') }}">Retour à l'accueil</a>
+<a href="{{ url_for('index') }}">Retour</a>
 
 {% endblock %}

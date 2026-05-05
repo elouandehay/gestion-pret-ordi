@@ -41,8 +41,9 @@ def process_etudiants(registration_file, info3_file=None, info4_file=None, info5
         ine = row.get("N°INE")
         email = row.get("Email")
         # On convertit en 1 si le texte est "Oui", "O", "1" ou "True"
-        raw_boursier = str(row.get("Témoin bourse", "")).strip().lower()
-        boursier = 1 if raw_boursier in ['oui', 'o', '1', 'true'] else 0
+        boursier_raw = row.get("Témoin bourse", "").strip().lower()
+        boursier = 1 if boursier_raw in ["oui", "o", "yes", "true", "1"] else 0
+
         regime_inscription = row.get("Régime Inscription")
         code_apprenant = row.get("Code Apprenant")
 

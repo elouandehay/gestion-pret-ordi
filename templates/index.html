@@ -133,6 +133,7 @@
 
         <th>Historique</th>
 
+        <th>Convention</th>
     </tr>
 
     {# Ligne de filtres (ton ami) #}
@@ -164,6 +165,8 @@
             </select>
 
         </th>
+
+        <th></th>
 
         <th></th>
 
@@ -231,6 +234,7 @@
 
             {% elif pc['dispo'] == 0 %}
 
+
             <form action="{{ url_for('rendre', numero_serie=pc['numero_serie']) }}" method="post" style="display:inline;">
 
                 <input type="text" name="commentaire" placeholder="État du PC" required>
@@ -255,7 +259,6 @@
             <span style="color: grey;">Suppression impossible prêt en cours</span>
 
             {% endif %}
-
 
             {% if pc['dispo'] == 1 %}
 
@@ -373,6 +376,16 @@
 
             </a>
 
+        </td>
+
+        <td>
+          {% if pc['dispo'] == 0 and pc['pret_id'] %}
+              <a href="{{ url_for('telecharger_convention_pret', pret_id=pc['pret_id']) }}">
+                  <button type="button">Télécharger convention</button>
+              </a>
+          {% else %}
+              <span style="color: grey;">Pas de convention</span>
+          {% endif %}
         </td>
 
     </tr>

@@ -34,6 +34,12 @@ CREATE TABLE etudiants (
     regime_scolarite TEXT NOT NULL,
     annee INTEGER DEFAULT NULL,
     en_scolarite INTEGER DEFAULT 1
+    boursier INTEGER NOT NULL,
+    en_scolarite INTEGER DEFAULT 1
+    ine TEXT,
+    regime_scolarite TEXT NOT NULL,
+    annee INTEGER DEFAULT NULL,
+
 );
 
 CREATE TABLE prets (
