@@ -1391,7 +1391,7 @@ def _appliquer_redo(conn, action):
 
 #init_scheduler(app)
 
-<<<<<<< HEAD
+
 @app.route('/admin/create', methods=['GET', 'POST'])
 @login_required
 def create_admin():
