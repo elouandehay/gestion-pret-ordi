@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, request, \
     redirect, url_for, render_template, send_file, jsonify, request, redirect, url_for, render_template, send_file
     
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 from functools import wraps
 import bcrypt
@@ -36,6 +36,7 @@ app.secret_key = '3757983889c72c54cb6c98760ca81d3ba40e9ac275062a86266d2816711c24
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=20)
 
 limiter = Limiter(
     get_remote_address,
@@ -63,6 +64,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
+            flash("Votre session a expiré pour cause d'inactivité. Veuillez vous reconnecter.")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -151,6 +153,7 @@ def login():
             valid = False
 
         if valid:
+            session.permanent = True
             session['user'] = user['username']
             # Backup à la connexion + planification toutes les 10 min
             faire_backup(label=f'login_{user["username"]}')
@@ -210,6 +213,40 @@ def index():
         commentaires_dict[c['ordinateur_id']].append(c)
 
     return render_template('index.html', ordinateurs=ordinateurs, commentaires_dict=commentaires_dict, etudiants=etudiants, can_undo=can_undo, can_redo=can_redo)
+
+
+
+@app.route('/parametres')
+@login_required
+def parametres():
+    # Récupère la durée actuelle en secondes et la convertit en minutes
+    lifetime = app.config.get('PERMANENT_SESSION_LIFETIME')
+    current_minutes = int(lifetime.total_seconds() / 60) if lifetime else 15
+    
+    return render_template('parametres.html', current_minutes=current_minutes)
+    
+    
+@app.route('/parametres/timeout', methods=['POST'])
+@login_required
+def modifier_timeout():
+    minutes = request.form.get('minutes', type=int)
+    
+    if minutes and minutes > 0:
+        # Applique la nouvelle durée de session
+        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=minutes)
+        
+        # Enregistrement de la modification dans le registre d'audit (Logs)
+        conn = get_db_connection()
+        write_log(conn, f"Temps d'inactivité avant déconnexion configuré sur {minutes} minutes", {'timeout_minutes': minutes})
+        conn.commit()
+        conn.close()
+        
+        flash(f"Le temps d'inactivité a été mis à jour avec succès ({minutes} minutes).")
+    else:
+        flash("Veuillez entrer un nombre de minutes valide supérieur à 0.")
+        
+    return redirect(url_for('parametres'))
+
 
 @app.route('/etudiant/<int:id>')
 @login_required
@@ -1418,7 +1455,7 @@ def create_admin():
             write_log(conn, f"Nouvel administrateur créé : {new_username}", {'user_created': new_username})
             
             flash(f"Le compte admin '{new_username}' a été créé avec succès.")
-            return redirect(url_for('index'))
+            return redirect(url_for('parametres'))
         except sqlite3.IntegrityError:
             flash("Erreur : Ce nom d'utilisateur existe déjà.")
         finally:

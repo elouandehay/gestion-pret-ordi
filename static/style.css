@@ -1,0 +1,46 @@
+
+.header-container {
+    display: flex;
+    justify-content: space-between; /* Pousse les éléments aux extrémités */
+    align-items: center;
+}
+
+/* Le style du bouton Paramètres */
+.btn-parametres {
+    background-color: #0047AB; /* Bleu cobalt profond */
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-right: 15px; /* Laisse un peu d'espace avec le bord ou le bouton déconnexion */
+}
+
+.btn-parametres:hover {
+    background-color: #0f52ba; /* Bleu saphir au survol */
+}
+
+
+
+.header-container {
+    display: flex;
+    justify-content: space-between; /* Pousse les éléments aux extrémités */
+    align-items: center;
+}
+
+/* Le style du bouton Paramètres */
+.btn-parametres {
+    background-color: #0047AB; /* Bleu cobalt profond */
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-right: 15px; /* Laisse un peu d'espace avec le bord ou le bouton déconnexion */
+}
+
+.btn-parametres:hover {
+    background-color: #0f52ba; /* Bleu saphir au survol */
+}

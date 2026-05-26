@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <title>Gestion Prêt Ordi</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        body { 
+            font-family: sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
@@ -13,10 +18,21 @@
         input[type="text"] { padding: 5px; }
         button { cursor: pointer; padding: 5px 10px; }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>🖥️ Gestion des Prêts</h1>
+    <h1>Gestion des Prêts</h1>
     <hr>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; margin-bottom: 20px; border-radius: 5px; color: #155724;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     {% block content %}{% endblock %}
 </body>
-</html>

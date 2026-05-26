@@ -1,13 +1,14 @@
  {% extends 'base.html' %}
 
-
 {% block content %}
+<div style="width: 100%; padding: 0 20px; box-sizing: border-box;">
 
 <div style="text-align: right; padding: 10px;">
 
     Connecté en tant que <strong>{{ session['user'] }}</strong> |
 
     <a href="{{ url_for('logout') }}" style="color: red;">Se déconnecter</a>
+    <a href="{{ url_for('parametres') }}" class="btn-parametres">Paramètres</a>
 
 </div>
 
@@ -21,8 +22,6 @@
     <a class="action-btn" href="{{ url_for('ajouter_modele') }}">Ajouter des ordinateurs</a>
     <a class="action-btn" href="{{ url_for('afficher_mails') }}">Programmer l'envoi de mails</a>
     <a class="action-btn" href="{{ url_for('modification_convention') }}">Modifier la convention</a>
-    {# Bouton pour créer un admin supplémentaire #}
-    <a class="action-btn" href="{{ url_for('create_admin') }}" >Créer un compte Admin</a>
 </div>
 
 
@@ -544,6 +543,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <style>
 
+table {
+    width: 100%;
+    border-collapse: collapse; /* Garde les bordures propres */
+}
+
 .suggestions-box {
 
     border: 1px solid #ccc;
@@ -578,5 +582,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </style>
 
-
+</div>
 {% endblock %} 
