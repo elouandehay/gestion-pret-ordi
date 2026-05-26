@@ -223,7 +223,7 @@ def index():
     commentaires = conn.execute("""
         SELECT ordinateur_id, commentaire, date_commentaire
         FROM commentaires
-        ORDER BY date_commentaire DESC
+        ORDER BY date_commentaire DESC, id DESC
     """).fetchall()
 
 
@@ -1330,6 +1330,7 @@ def annuler_log(log_id):
 def backups():
     fichiers = sorted(
         [f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')],
+        key=lambda f: os.path.getmtime(os.path.join(BACKUP_DIR, f)),
         reverse=True
     )
     liste = []
