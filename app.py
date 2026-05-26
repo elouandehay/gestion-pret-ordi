@@ -103,32 +103,59 @@ def write_log(conn, description, action_data):
     )
 
 
+
+# --- NOUVEAU SYSTÈME DE BACKUP SÉCURISÉ ---
+backup_scheduler = BackgroundScheduler()
+
 def faire_backup(label='auto'):
-    """Crée une copie de la base de données dans le dossier backups/."""
+    """Crée une copie sécurisée de la base de données SQLite."""
     os.makedirs(BACKUP_DIR, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamp = datetime.now().strftime('%d-%m-%Y_a_%Hh%M')
     filename = f"backup_{label}_{timestamp}.db"
     dest = os.path.join(BACKUP_DIR, filename)
-    shutil.copy2(DB_PATH, dest)
+    
+    # Copie à chaud sécurisée via l'API SQLite
+    try:
+        source_conn = sqlite3.connect(DB_PATH)
+        dest_conn = sqlite3.connect(dest)
+        with dest_conn:
+            source_conn.backup(dest_conn)
+        dest_conn.close()
+        source_conn.close()
+    except Exception as e:
+        logging.error(f"Erreur lors du backup : {e}")
+        return None
 
     # Garder seulement les MAX_BACKUPS derniers
     tous_les_backups = sorted(
         [f for f in os.listdir(BACKUP_DIR) if f.endswith('.db')],
+        key=lambda x: os.path.getmtime(os.path.join(BACKUP_DIR, x)),
         reverse=True
     )
     for old in tous_les_backups[MAX_BACKUPS:]:
-        os.remove(os.path.join(BACKUP_DIR, old))
+        try:
+            os.remove(os.path.join(BACKUP_DIR, old))
+        except OSError:
+            pass
 
     return filename
 
+def faire_backup_periodique_job():
+    logging.info("Exécution du backup périodique automatique.")
+    faire_backup(label='auto_périodique')
 
-def planifier_backup_periodique(user):
-    """Lance un backup toutes les 10 minutes en arrière-plan."""
-    faire_backup(label=f'auto_{user}')
-    timer = threading.Timer(600, planifier_backup_periodique, args=[user])
-    timer.daemon = True
-    timer.start()
-
+def init_backup_scheduler():
+    if not backup_scheduler.running:
+        backup_scheduler.add_job(
+            faire_backup_periodique_job,
+            trigger="interval",
+            minutes=10,
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=60
+        )
+        backup_scheduler.start()
+        print("Backup Scheduler démarré avec succès")
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
@@ -157,13 +184,16 @@ def login():
             session['user'] = user['username']
             # Backup à la connexion + planification toutes les 10 min
             faire_backup(label=f'login_{user["username"]}')
-            planifier_backup_periodique(user['username'])
             return redirect(url_for('index'))
         else:
             flash("Identifiant ou mot de passe incorrect")
 
     return render_template('login.html')
 
+def faire_backup_periodique_job():
+    """Fonction appelée par le scheduler unique."""
+    logging.info("Exécution du backup périodique automatique.")
+    faire_backup(label='auto_périodique')
 
 @app.route('/logout')
 def logout():
@@ -876,7 +906,7 @@ def envoyer_mails_programmes():
 # ---------------- SCHEDULER ----------------
 def init_scheduler(app):
     if not scheduler.running:
-        scheduler.add_job(
+        scheduler.add_job( #tach 1 : envoi de mail
             envoyer_mails_programmes,
             trigger="interval",
             minutes=1,
@@ -886,7 +916,7 @@ def init_scheduler(app):
         )
         scheduler.start()
         print("Scheduler started")
-
+        
 # Update de la table des étudiants à partir des nouveaux .csv
 
 def write_json(path, ines):
@@ -1426,7 +1456,6 @@ def _appliquer_redo(conn, action):
             (action['numero_serie'], action['commentaire'])
         )
 
-#init_scheduler(app)
 
 
 @app.route('/admin/create', methods=['GET', 'POST'])
@@ -1462,6 +1491,10 @@ def create_admin():
             conn.close()
 
     return render_template('create_admin.html')
+    
+    
+#init_scheduler(app)
+init_backup_scheduler()
 
 if __name__ == '__main__':
     app.run(debug=True, ssl_context='adhoc')
